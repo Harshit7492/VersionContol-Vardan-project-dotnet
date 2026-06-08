@@ -1,0 +1,645 @@
+// src/features/project-management/components/create-project.tsx
+import { useState } from 'react'
+import { useForm, useFieldArray } from 'react-hook-form'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Separator } from '@/components/ui/separator'
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  Upload,
+  FileText,
+  Package,
+  Save,
+  X,
+  Home,
+  FileIcon,
+  Loader2,
+  CheckCircle2,
+  ChevronRight,
+} from 'lucide-react'
+import { toast } from 'sonner'
+import { useNavigate } from '@tanstack/react-router'
+
+// Types
+type FileItem = {
+  fileName: string
+  file: File | null
+  fileUrl?: string
+  isExe: boolean
+  size?: string
+}
+
+type VersionItem = {
+  name: string
+  files: FileItem[]
+}
+
+type ProjectForm = {
+  name: string
+  description: string
+  versions: VersionItem[]
+}
+
+// Utility function
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+export function CreateProjectPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showCreatePage, setShowCreatePage] = useState(true)
+
+  const form = useForm<ProjectForm>({
+    defaultValues: {
+      name: '',
+      description: '',
+      versions: [],
+    },
+  })
+
+  const { fields: versionFields, append: appendVersion, remove: removeVersion } = useFieldArray({
+    control: form.control,
+    name: 'versions',
+  })
+
+  // File selection handler
+  const handleFileSelect = (versionIndex: number, fileIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file size (max 100MB)
+      if (file.size > 100 * 1024 * 1024) {
+        toast.error('File too large', {
+          description: 'Maximum file size is 100MB',
+        })
+        return
+      }
+
+      const fileUrl = URL.createObjectURL(file)
+      form.setValue(`versions.${versionIndex}.files.${fileIndex}.file`, file)
+      form.setValue(`versions.${versionIndex}.files.${fileIndex}.fileUrl`, fileUrl)
+      form.setValue(`versions.${versionIndex}.files.${fileIndex}.size`, formatFileSize(file.size))
+      
+      if (!form.getValues(`versions.${versionIndex}.files.${fileIndex}.fileName`)) {
+        form.setValue(`versions.${versionIndex}.files.${fileIndex}.fileName`, file.name)
+      }
+
+      toast.success('File selected', {
+        description: `${file.name} (${formatFileSize(file.size)})`,
+      })
+    }
+  }
+
+  // Add version
+  const addVersion = () => {
+    appendVersion({
+      name: `Version ${versionFields.length + 1}`,
+      files: [],
+    })
+    toast.success('Version added')
+  }
+
+  // Add file to version
+  const addFile = (versionIndex: number) => {
+    const currentFiles = form.getValues(`versions.${versionIndex}.files`) || []
+    form.setValue(`versions.${versionIndex}.files`, [
+      ...currentFiles,
+      {
+        fileName: '',
+        file: null,
+        fileUrl: '',
+        isExe: false,
+        size: '',
+      },
+    ])
+  }
+
+  // Remove file from version
+  const removeFile = (versionIndex: number, fileIndex: number) => {
+    const currentFiles = form.getValues(`versions.${versionIndex}.files`) || []
+    const fileToRemove = currentFiles[fileIndex]
+    
+    // Clean up object URL if exists
+    if (fileToRemove?.fileUrl) {
+      URL.revokeObjectURL(fileToRemove.fileUrl)
+    }
+    
+    currentFiles.splice(fileIndex, 1)
+    form.setValue(`versions.${versionIndex}.files`, currentFiles)
+  }
+
+  // Go back handler
+  const goBack = () => {
+    if (form.formState.isDirty) {
+      if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
+        setShowCreatePage(false)
+      }
+    } else {
+      setShowCreatePage(false)
+    }
+  }
+
+  // Form submission
+  const onSubmit = async (data: ProjectForm) => {
+    if (!data.name.trim()) {
+      toast.error('Project name is required')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      // Process versions and files
+      const processedVersions = data.versions.map((version) => {
+        const processedFiles = (version.files || []).map((file) => ({
+          id: Date.now().toString() + Math.random(),
+          fileName: file.fileName.trim() || file.file?.name || 'Untitled',
+          fileUrl: file.fileUrl || '',
+          isExe: file.isExe,
+          size: file.size || '',
+          uploadedAt: new Date().toISOString(),
+        }))
+
+        return {
+          id: Date.now().toString() + Math.random(),
+          name: version.name.trim(),
+          files: processedFiles,
+          createdAt: new Date().toISOString(),
+        }
+      })
+
+      const newProject = {
+        id: Date.now().toString(),
+        name: data.name.trim(),
+        description: data.description?.trim() || '',
+        versions: processedVersions,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+
+      // Save to localStorage
+      const existingProjects = JSON.parse(localStorage.getItem('projects') || '[]')
+      existingProjects.push(newProject)
+      localStorage.setItem('projects', JSON.stringify(existingProjects))
+
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent('projectCreated', { detail: newProject }))
+
+      toast.success('Project created successfully!', {
+        description: `${newProject.name} with ${processedVersions.length} version(s)`,
+      })
+      
+      setShowCreatePage(false)
+      form.reset()
+    } catch (error) {
+      console.error('Error creating project:', error)
+      toast.error('Failed to create project', {
+        description: 'Please try again later',
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Save draft
+  const handleSaveDraft = () => {
+    const data = form.getValues()
+    if (!data.name.trim()) {
+      toast.error('Project name is required for draft')
+      return
+    }
+
+    try {
+      const draftProject = {
+        ...data,
+        id: `draft-${Date.now()}`,
+        status: 'draft',
+        createdAt: new Date().toISOString(),
+      }
+
+      const drafts = JSON.parse(localStorage.getItem('projectDrafts') || '[]')
+      drafts.push(draftProject)
+      localStorage.setItem('projectDrafts', JSON.stringify(drafts))
+
+      toast.success('Draft saved', {
+        description: 'You can continue editing later',
+      })
+    } catch (error) {
+      toast.error('Failed to save draft')
+    }
+  }
+
+  const projectName = form.watch('name')
+const navigate = useNavigate()
+  // If showCreatePage is false, return null or a message
+  if (!showCreatePage) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Project Created!</h2>
+          <p className="text-muted-foreground mb-4">Redirecting back to projects...</p>
+          <Button onClick={() => navigate({ to: '/tasks' })} variant="outline">
+            Go to Projects
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header with Simple Breadcrumb */}
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 py-4">
+          <nav className="flex items-center space-x-1 text-sm text-muted-foreground">
+            <button 
+              onClick={goBack}
+              className="flex items-center gap-1 hover:text-foreground transition-colors"
+            >
+              <Home className="h-4 w-4" />
+              Home
+            </button>
+            <ChevronRight className="h-4 w-4" />
+            <button 
+             onClick={() =>
+          navigate({
+            to: '/tasks',
+          })
+        }
+              className="hover:text-foreground transition-colors"
+            >
+              Projects
+            </button>
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-foreground font-medium">
+              Create Project
+            </span>
+          </nav>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="container  mx-auto px-4 py-8">
+        {/* Page Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/tasks') }
+              className="gap-2 hover:bg-muted"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Projects
+            </Button>
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {projectName || 'Create New Project'}
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Set up your project with versions and files. You can always add more versions later.
+            </p>
+          </div>
+        </div>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* Project Details Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <FileIcon className="h-5 w-5" />
+                  Project Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  rules={{ 
+                    required: 'Project name is required',
+                    minLength: {
+                      value: 2,
+                      message: 'Project name must be at least 2 characters'
+                    },
+                    maxLength: {
+                      value: 100,
+                      message: 'Project name must be less than 100 characters'
+                    }
+                  }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Project Name *</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="e.g., My Application v2.0" 
+                          className="max-w-xl"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          placeholder="Describe your project and its purpose..."
+                          rows={3}
+                          className="max-w-xl resize-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Versions Section */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    Versions
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Add versions to organize your releases. Each version can contain multiple files.
+                  </p>
+                </div>
+                <Button 
+                  type="button" 
+                  onClick={addVersion} 
+                  variant="outline" 
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Version
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {versionFields.length === 0 ? (
+                  <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                    <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Versions Yet</h3>
+                    <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                      Versions help you track different releases of your project. 
+                      Start by adding your first version.
+                    </p>
+                    <Button type="button" onClick={addVersion} variant="outline" size="lg">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add First Version
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {versionFields.map((version, versionIndex) => {
+                      const files = form.watch(`versions.${versionIndex}.files`) || []
+                      
+                      return (
+                        <Card key={version.id} className="border-2">
+                          <CardHeader className="bg-muted/50">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3 flex-1">
+                                <Badge variant="secondary" className="text-sm font-mono">
+                                  v{versionIndex + 1}
+                                </Badge>
+                                <FormField
+                                  control={form.control}
+                                  name={`versions.${versionIndex}.name`}
+                                  rules={{ required: 'Version name is required' }}
+                                  render={({ field }) => (
+                                    <FormItem className="flex-1">
+                                      <FormControl>
+                                        <Input 
+                                          {...field} 
+                                          placeholder="e.g., v1.0.0, Beta, Release Candidate"
+                                          className="border-0 bg-transparent font-semibold text-lg h-auto py-0 focus-visible:ring-0 px-0"
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  if (files.length > 0) {
+                                    if (confirm('This version contains files. Are you sure you want to remove it?')) {
+                                      removeVersion(versionIndex)
+                                    }
+                                  } else {
+                                    removeVersion(versionIndex)
+                                  }
+                                }}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Remove Version
+                              </Button>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-6">
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-medium">Files</h4>
+                                  <Badge variant="outline">{files.length}</Badge>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => addFile(versionIndex)}
+                                  className="gap-2"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  Add File
+                                </Button>
+                              </div>
+
+                              <Separator />
+
+                              {files.length === 0 ? (
+                                <div className="text-center py-8 border-2 border-dashed rounded-lg">
+                                  <FileText className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                                  <p className="text-sm text-muted-foreground mb-3">
+                                    No files added to this version
+                                  </p>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => addFile(versionIndex)}
+                                  >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add First File
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="space-y-3">
+                                  {files.map((file: any, fileIndex: number) => (
+                                    <Card key={fileIndex} className="border hover:border-primary/50 transition-colors">
+                                      <CardContent className="p-4">
+                                        <div className="grid gap-4 md:grid-cols-[1fr_250px_auto] items-start">
+                                          <div className="space-y-3">
+                                            <FormField
+                                              control={form.control}
+                                              name={`versions.${versionIndex}.files.${fileIndex}.fileName`}
+                                              render={({ field }) => (
+                                                <FormItem>
+                                                  <FormLabel className="text-xs font-medium">File Name</FormLabel>
+                                                  <FormControl>
+                                                    <Input 
+                                                      {...field} 
+                                                      placeholder="Enter file name or use uploaded filename"
+                                                      className="h-9"
+                                                    />
+                                                  </FormControl>
+                                                  <FormMessage />
+                                                </FormItem>
+                                              )}
+                                            />
+                                          </div>
+
+                                          <div className="space-y-3">
+                                            <div>
+                                              <FormLabel className="text-xs font-medium">Upload File</FormLabel>
+                                              <Input
+                                                type="file"
+                                                onChange={(e) => handleFileSelect(versionIndex, fileIndex, e)}
+                                                className="h-9 cursor-pointer"
+                                              />
+                                              {file.file && (
+                                                <div className="flex items-center gap-2 mt-2">
+                                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                                  <p className="text-xs text-muted-foreground">
+                                                    {file.file.name} ({file.size})
+                                                  </p>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          <div className="flex items-start gap-2 pt-7">
+                                            <FormField
+                                              control={form.control}
+                                              name={`versions.${versionIndex}.files.${fileIndex}.isExe`}
+                                              render={({ field }) => (
+                                                <FormItem className="flex items-center gap-2 space-y-0">
+                                                  <FormControl>
+                                                    <Checkbox
+                                                      checked={field.value}
+                                                      onCheckedChange={field.onChange}
+                                                    />
+                                                  </FormControl>
+                                                  <FormLabel className="text-xs cursor-pointer">
+                                                    EXE File
+                                                  </FormLabel>
+                                                </FormItem>
+                                              )}
+                                            />
+                                            <Button
+                                              type="button"
+                                              variant="ghost"
+                                              size="icon"
+                                              onClick={() => removeFile(versionIndex, fileIndex)}
+                                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            >
+                                              <X className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between pt-6 border-t sticky bottom-0 bg-background py-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate({ to: '/tasks' })}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSaveDraft}
+                  disabled={isSubmitting}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save as Draft
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting} 
+                  size="lg"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Creating Project...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Create Project
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </Form>
+      </div>
+    </div>
+  )
+}
+
+export default CreateProjectPage
