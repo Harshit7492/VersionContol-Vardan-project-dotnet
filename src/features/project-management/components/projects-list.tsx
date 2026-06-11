@@ -1,16 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import {
   Trash2,
   Download,
   FolderDown,
   Plus,
-  FileUp,
   ChevronDown,
   ChevronRight,
   FolderOpen,
@@ -21,13 +17,47 @@ import {
   Upload,
   Layers,
 } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
 import { useTasks } from './tasks-provider'
 import { showSubmittedData } from '@/lib/show-submitted-data'
+import { projectService } from '@/lib/api/projectService'
 
 export function ProjectsList() {
-  const { projects, setProjects, setCurrentRow, setOpen } = useTasks()
+  const { projects, setProjects, setCurrentRow } = useTasks()
+  const navigate = useNavigate()
+  // const [projects, setProjects] = useState<any[]>([])
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set())
   const [expandedVersions, setExpandedVersions] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const data = await projectService.GetAllProjectsList()
+        const projectsFromApi = data?.Data?.Projects || []
+
+        const normalizedProjects = projectsFromApi.map((project: any) => ({
+          ...project,
+          name: project.ProjectName,
+          description: project.ProjectDescription || '',
+          versions: (project.Versions || []).map((version: any) => ({
+            ...version,
+            name: version.VersionName,
+            files: (version.Files || []).map((file: any) => ({
+              ...file,
+              fileName: file.FileName,
+              fileDescription: file.FileDescription || '',
+              filePath: file.FilePath,
+            })),
+          })),
+        }))
+
+        setProjects(normalizedProjects)
+      } catch (error) {
+        console.error('Failed to fetch projects:', error)
+      }
+    }
+    fetchProjects()
+  }, [setProjects])
 
   if (!projects || projects.length === 0) {
     return (
@@ -87,7 +117,13 @@ export function ProjectsList() {
       ...project,
       __projectIndex: index,
     })
-    setOpen('update')
+
+    const projectId = project.ProjectId ?? project.id ?? project.projectId
+    if (!projectId) {
+      return
+    }
+
+    navigate({ to: `/tasks/edit/${projectId}/` })
   }
 
   const handleAddVersion = (projectIndex: number, e: React.MouseEvent) => {
@@ -109,10 +145,11 @@ export function ProjectsList() {
 
   const handleDownloadFile = (file: any, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!file?.fileUrl) return
+    const href = file?.fileUrl || file?.filePath
+    if (!href) return
 
     const link = document.createElement('a')
-    link.href = file.fileUrl
+    link.href = href
     link.download = file.fileName || 'download'
     document.body.appendChild(link)
     link.click()

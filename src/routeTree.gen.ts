@@ -33,6 +33,7 @@ import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_auth
 import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenticated/errors/$error'
 import { Route as AuthenticatedUsersRolesIndexRouteImport } from './routes/_authenticated/users/roles/index'
 import { Route as AuthenticatedTasksCreateIndexRouteImport } from './routes/_authenticated/tasks/create/index'
+import { Route as AuthenticatedTasksEditProjectIdIndexRouteImport } from './routes/_authenticated/tasks/edit/$projectId/index'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -163,6 +164,12 @@ const AuthenticatedTasksCreateIndexRoute =
     path: '/tasks/create/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTasksEditProjectIdIndexRoute =
+  AuthenticatedTasksEditProjectIdIndexRouteImport.update({
+    id: '/tasks/edit/$projectId/',
+    path: '/tasks/edit/$projectId/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/users/': typeof AuthenticatedUsersIndexRoute
   '/tasks/create/': typeof AuthenticatedTasksCreateIndexRoute
   '/users/roles/': typeof AuthenticatedUsersRolesIndexRoute
+  '/tasks/edit/$projectId/': typeof AuthenticatedTasksEditProjectIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
@@ -212,6 +220,7 @@ export interface FileRoutesByTo {
   '/users': typeof AuthenticatedUsersIndexRoute
   '/tasks/create': typeof AuthenticatedTasksCreateIndexRoute
   '/users/roles': typeof AuthenticatedUsersRolesIndexRoute
+  '/tasks/edit/$projectId': typeof AuthenticatedTasksEditProjectIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -239,6 +248,7 @@ export interface FileRoutesById {
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
   '/_authenticated/tasks/create/': typeof AuthenticatedTasksCreateIndexRoute
   '/_authenticated/users/roles/': typeof AuthenticatedUsersRolesIndexRoute
+  '/_authenticated/tasks/edit/$projectId/': typeof AuthenticatedTasksEditProjectIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/users/'
     | '/tasks/create/'
     | '/users/roles/'
+    | '/tasks/edit/$projectId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/dashboard'
@@ -290,6 +301,7 @@ export interface FileRouteTypes {
     | '/users'
     | '/tasks/create'
     | '/users/roles'
+    | '/tasks/edit/$projectId'
   id:
     | '__root__'
     | '/_authenticated'
@@ -316,6 +328,7 @@ export interface FileRouteTypes {
     | '/_authenticated/users/'
     | '/_authenticated/tasks/create/'
     | '/_authenticated/users/roles/'
+    | '/_authenticated/tasks/edit/$projectId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -500,6 +513,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTasksCreateIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tasks/edit/$projectId/': {
+      id: '/_authenticated/tasks/edit/$projectId/'
+      path: '/tasks/edit/$projectId'
+      fullPath: '/tasks/edit/$projectId/'
+      preLoaderRoute: typeof AuthenticatedTasksEditProjectIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -537,6 +557,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute
   AuthenticatedTasksCreateIndexRoute: typeof AuthenticatedTasksCreateIndexRoute
   AuthenticatedUsersRolesIndexRoute: typeof AuthenticatedUsersRolesIndexRoute
+  AuthenticatedTasksEditProjectIdIndexRoute: typeof AuthenticatedTasksEditProjectIdIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -550,6 +571,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,
   AuthenticatedTasksCreateIndexRoute: AuthenticatedTasksCreateIndexRoute,
   AuthenticatedUsersRolesIndexRoute: AuthenticatedUsersRolesIndexRoute,
+  AuthenticatedTasksEditProjectIdIndexRoute:
+    AuthenticatedTasksEditProjectIdIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
