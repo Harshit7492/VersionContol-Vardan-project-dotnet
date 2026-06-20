@@ -7,18 +7,13 @@ import { UsersPrimaryButtons } from './components/users-primary-buttons'
 import { UsersProvider } from './components/users-provider'
 import { UsersTable } from './components/users-table'
 
-
 export function Users() {
-  
-
   return (
     <UsersProvider>
       <Header fixed>
         {/* <Search className='me-auto' /> */}
 
-       < div className='me-auto'>
-       User Management
-       </div>
+        <div className='me-auto'>User Management</div>
         {/* <ThemeSwitch /> */}
         <ConfigDrawer />
         <ProfileDropdown />
@@ -32,11 +27,11 @@ export function Users() {
               Manage your users and their roles here.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className='flex gap-2'>
             <UsersPrimaryButtons />
           </div>
         </div>
-        <UsersTable   />
+        <UsersTable />
       </Main>
 
       <UsersDialogs />

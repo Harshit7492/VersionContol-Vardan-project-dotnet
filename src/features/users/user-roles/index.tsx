@@ -1,11 +1,11 @@
+import { ConfigDrawer } from '@/components/config-drawer'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
-// import { ThemeSwitch } from '@/components/theme-switch'
-import { ConfigDrawer } from '@/components/config-drawer'
+import { ThemeSwitch } from '@/components/theme-switch'
+import { UsersDialogs } from '../components/users-dialogs'
 import { UsersProvider } from '../components/users-provider'
 import { UsersSecondaryButtons } from '../components/users-secondary-button'
-import { UsersDialogs } from '../components/users-dialogs'
 import { UsersRoleTable } from './user-role-table'
 
 export function UsersRole() {
@@ -13,7 +13,7 @@ export function UsersRole() {
     <UsersProvider>
       <Header fixed>
         <div className='me-auto'>User Management</div>
-        {/* <ThemeSwitch /> */}
+        <ThemeSwitch />
         <ConfigDrawer />
         <ProfileDropdown />
       </Header>
@@ -21,7 +21,9 @@ export function UsersRole() {
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
         <div className='flex flex-wrap items-end justify-between gap-2'>
           <div>
-            <h2 className='text-2xl font-bold tracking-tight'>User Roles List</h2>
+            <h2 className='text-2xl font-bold tracking-tight'>
+              User Roles List
+            </h2>
             <p className='text-muted-foreground'>
               Manage your users and their roles here.
             </p>
@@ -29,9 +31,9 @@ export function UsersRole() {
 
           {/* No props needed - Automatically checks all permissions */}
           {/* <PermissionWrapper> */}
-            <div className="flex gap-2">
-              <UsersSecondaryButtons />
-            </div>
+          <div className='flex gap-2'>
+            <UsersSecondaryButtons />
+          </div>
           {/* </PermissionWrapper> */}
         </div>
 

@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function UserDashboardPage() {
   const [projects, setProjects] = useState<any[]>([])
-  // const [search, setSearch] = useState('')
+  const [search] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(
     new Set()
@@ -71,8 +71,10 @@ export default function UserDashboardPage() {
   }
 
   const filteredProjects = useMemo(() => {
-    return projects
-  }, [projects])
+    return projects.filter((p) =>
+      p.ProjectName?.toLowerCase().includes(search.toLowerCase())
+    )
+  }, [projects, search])
 
   const toggleProject = (projectId: number) => {
     const next = new Set(expandedProjects)
@@ -101,15 +103,15 @@ export default function UserDashboardPage() {
     try {
       setDownloadingFiles((prev) => new Set(prev).add(file.FileId))
 
-      // let blob: Blob
+      let blob: Blob
 
-      // if (file.FilePath) {
-      //   // Primary: use FilePath key to download via server-side path
-      //   blob = await projectService.DownloadFileByPath(file.FilePath)
-      // } else {
-      //   // Fallback: download by FileId
-      //   blob = await projectService.DownloadFile(file.FileId)
-      // }
+      if (file.FilePath) {
+        // Primary: use FilePath key to download via server-side path
+        // blob = await projectService.DownloadFileByPath(file.FilePath)
+      } else {
+        // Fallback: download by FileId
+        // blob = await projectService.DownloadFile(file.FileId)
+      }
 
       const url = window.URL.createObjectURL(file.FilePath)
       const link = document.createElement('a')
