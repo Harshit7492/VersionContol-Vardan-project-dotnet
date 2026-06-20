@@ -1,18 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+// import { useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { showSubmittedData } from '@/lib/show-submitted-data'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+// import { Input } from '@/components/ui/input'
+// import { Label } from '@/components/ui/label'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import { type User } from '../data/schema'
+
+// import { type User } from '../data/schema'
 
 type UserDeleteDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  currentRow: User
+  currentRow: any
 }
 
 export function UsersDeleteDialog({
@@ -20,7 +21,7 @@ export function UsersDeleteDialog({
   onOpenChange,
   currentRow,
 }: UserDeleteDialogProps) {
-  const [value, setValue] = useState('')
+  // const [value, setValue] = useState('')
 
   const handleDelete = () => {
     // if (value.trim() !== currentRow.username) return
@@ -54,16 +55,13 @@ export function UsersDeleteDialog({
           className='space-y-4'
         >
           <p className='mb-2'>
-            Are you sure you want to delete{' '}
-            <br />
+            Are you sure you want to delete <br />
             This action will permanently remove the user with the role of{' '}
             <span className='font-bold'>
               {currentRow.role.toUpperCase()}
             </span>{' '}
             from the system. This cannot be undone.
           </p>
-
-       
 
           <Alert variant='destructive'>
             <AlertTitle>Warning!</AlertTitle>

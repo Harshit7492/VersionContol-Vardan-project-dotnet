@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { toast } from 'sonner'
 
 import { userService } from '@/lib/api/userService'
@@ -15,6 +15,8 @@ import {
 } from '@/components/ui/table'
 
 import { Switch } from '@/components/ui/switch'
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 import { UsersRoleDialog } from '../components/user-role-dialog'
 
 interface Permission {
@@ -35,29 +37,41 @@ interface RoleItem {
 export function UsersRoleTable() {
   const [roles, setRoles] = useState<RoleItem[]>([])
   const [loadingRoleId, setLoadingRoleId] = useState<number | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   
-  // Local state replacements for context parameters
+  const [openAddDialog, setOpenAddDialog] = useState(false)
   const [openEditDialog, setOpenEditDialog] = useState(false)
   const [selectedRole, setSelectedRole] = useState<RoleItem | null>(null)
 
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
     try {
-      const response = await userService.getUserRoles()
+      setIsLoading(true)
+      const response = await userService.getUserRoles({statusFilter: 0})
+      const rolesData = response.response || response.data || response || []
+      
       setRoles(
-        (response.response || []).map((role: any) => ({
-          ...role,
-          RoleStatus: role.RoleStatus ?? 0,
+        rolesData.map((role: any) => ({
+          Id: role.Id || role.id,
+          RoleName: role.RoleName || role.roleName,
+          RoleStatus: role.RoleStatus ?? role.roleStatus ?? 0,
+          Permission: role.Permission || role.permission || null
         }))
       )
     } catch (error) {
-      console.error(error)
+      console.error('Fetch roles error:', error)
       toast.error('Failed to fetch roles')
+    } finally {
+      setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchRoles()
-  }, [])
+  }, [fetchRoles])
+
+  const handleAdd = () => {
+    setOpenAddDialog(true)
+  }
 
   const handleEdit = (role: RoleItem) => {
     setSelectedRole(role)
@@ -91,8 +105,9 @@ export function UsersRoleTable() {
 
       toast.success(`Role ${checked ? 'activated' : 'deactivated'} successfully`)
     } catch (error) {
-      console.error(error)
+      console.error('Toggle role error:', error)
       toast.error('Failed to update role status')
+      await fetchRoles()
     } finally {
       setLoadingRoleId(null)
     }
@@ -107,81 +122,110 @@ export function UsersRoleTable() {
     return permList.length > 0 ? permList.join(', ') : 'No Access'
   }
 
+  if (isLoading && roles.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    )
+  }
+
   return (
-    <div className='rounded-md border'>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Role ID</TableHead>
-            <TableHead>Role Name</TableHead>
-            <TableHead>Permissions Granted</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className='text-right'>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
+    <>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">User Roles</h2>
+          <Button onClick={handleAdd}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Role
+          </Button>
+        </div>
 
-        <TableBody>
-          {roles.length > 0 ? (
-            roles.map((role) => (
-              <TableRow key={role.Id}>
-                <TableCell className='font-medium'>{role.Id}</TableCell>
-                <TableCell>{role.RoleName}</TableCell>
-                <TableCell className='text-sm text-muted-foreground'>
-                  {formatPermissions(role.Permission)}
-                </TableCell>
-                <TableCell>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                      role.RoleStatus === 1
-                        ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                        : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
-                    }`}
-                  >
-                    {role.RoleStatus === 1 ? 'Active' : 'Inactive'}
-                  </span>
-                </TableCell>
-
-                <TableCell className='text-right'>
-                  <div className='flex items-center justify-end gap-3'>
-                    <button
-                      className='rounded border px-3 py-1 text-sm hover:bg-muted transition-colors'
-                      onClick={() => handleEdit(role)}
-                    >
-                      Edit
-                    </button>
-
-                    <Switch
-                      checked={role.RoleStatus === 1}
-                      onCheckedChange={(checked) => handleToggle(role, checked)}
-                      disabled={loadingRoleId === role.Id}
-                    />
-                  </div>
-                </TableCell>
+        <div className='rounded-md border'>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Role ID</TableHead>
+                <TableHead>Role Name</TableHead>
+                <TableHead>Permissions Granted</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className='text-right'>Actions</TableHead>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={5} className='h-24 text-center'>
-                No Roles Found
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            </TableHeader>
 
-      {/* Controlled entirely through props. Passing data context directly down */}
-      {openEditDialog && (
-        <UsersRoleDialog
-          open={openEditDialog}
-          onOpenChange={(val) => {
-            setOpenEditDialog(val)
-            if(!val) setSelectedRole(null)
-          }}
-          type="Edit"
-          initialData={selectedRole}
-          onSuccess={fetchRoles} // Refreshes the grid data when a save is successful
-        />
-      )}
-    </div>
+            <TableBody>
+              {roles.length > 0 ? (
+                roles.map((role) => (
+                  <TableRow key={role.Id}>
+                    <TableCell className='font-medium'>{role.Id}</TableCell>
+                    <TableCell>{role.RoleName}</TableCell>
+                    <TableCell className='text-sm text-muted-foreground'>
+                      {formatPermissions(role.Permission)}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                          role.RoleStatus === 1
+                            ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                            : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                        }`}
+                      >
+                        {role.RoleStatus === 1 ? 'Active' : 'Inactive'}
+                      </span>
+                    </TableCell>
+
+                    <TableCell className='text-right'>
+                      <div className='flex items-center justify-end gap-3'>
+                        <button
+                          className='rounded border px-3 py-1 text-sm hover:bg-muted transition-colors'
+                          onClick={() => handleEdit(role)}
+                        >
+                          Edit
+                        </button>
+
+                        <Switch
+                          checked={role.RoleStatus === 1}
+                          onCheckedChange={(checked) => handleToggle(role, checked)}
+                          disabled={loadingRoleId === role.Id}
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className='h-24 text-center'>
+                    No Roles Found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Add Dialog */}
+      <UsersRoleDialog
+        open={openAddDialog}
+        onOpenChange={(val) => {
+          setOpenAddDialog(val)
+          if (!val) setSelectedRole(null)
+        }}
+        type="Add"
+        onSuccess={fetchRoles}
+      />
+
+      {/* Edit Dialog */}
+      <UsersRoleDialog
+        open={openEditDialog}
+        onOpenChange={(val) => {
+          setOpenEditDialog(val)
+          if (!val) setSelectedRole(null)
+        }}
+        type="Edit"
+        initialData={selectedRole}
+        onSuccess={fetchRoles}
+      />
+    </>
   )
 }

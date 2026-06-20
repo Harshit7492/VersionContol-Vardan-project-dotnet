@@ -1,9 +1,7 @@
-import { Link, useSearch } from '@tanstack/react-router'
 import { Logo } from '@/assets/logo'
 import { UserAuthForm } from './components/user-auth-form'
 
 export function SignIn() {
-  const { redirect } = useSearch({ from: '/(auth)/sign-in' })
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1e3a8a] to-[#3b82f6] flex items-center justify-center p-4">
@@ -42,7 +40,7 @@ export function SignIn() {
             </div>
 
             <div className="mt-8">
-              <UserAuthForm redirectTo={redirect} />
+              <UserAuthForm/>
             </div>
 
             {/* <div className="mt-6 text-center text-sm">

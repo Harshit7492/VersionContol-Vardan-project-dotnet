@@ -1,20 +1,19 @@
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
-import { ThemeSwitch } from '@/components/theme-switch'
+// import { ThemeSwitch } from '@/components/theme-switch'
 import { ConfigDrawer } from '@/components/config-drawer'
 import { UsersProvider } from '../components/users-provider'
 import { UsersSecondaryButtons } from '../components/users-secondary-button'
 import { UsersDialogs } from '../components/users-dialogs'
 import { UsersRoleTable } from './user-role-table'
-import { PermissionWrapper } from '@/features/auth/auth-permission-wrapper'
 
 export function UsersRole() {
   return (
     <UsersProvider>
       <Header fixed>
         <div className='me-auto'>User Management</div>
-        <ThemeSwitch />
+        {/* <ThemeSwitch /> */}
         <ConfigDrawer />
         <ProfileDropdown />
       </Header>
@@ -29,11 +28,11 @@ export function UsersRole() {
           </div>
 
           {/* No props needed - Automatically checks all permissions */}
-          <PermissionWrapper>
+          {/* <PermissionWrapper> */}
             <div className="flex gap-2">
               <UsersSecondaryButtons />
             </div>
-          </PermissionWrapper>
+          {/* </PermissionWrapper> */}
         </div>
 
         <UsersRoleTable />

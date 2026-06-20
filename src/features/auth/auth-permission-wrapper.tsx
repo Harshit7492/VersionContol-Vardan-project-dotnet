@@ -8,11 +8,7 @@ type PermissionWrapperProps = {
   requireAll?: boolean
 }
 
-export function PermissionWrapper({ 
-  children, 
-  requireAll = true 
-}: PermissionWrapperProps) {
-  
+export function PermissionWrapper({ children }: PermissionWrapperProps) {
   const { data: userProfile, isLoading } = useUserProfile()
 
   if (isLoading) return null
@@ -28,7 +24,12 @@ export function PermissionWrapper({
   // Show only if ALL permissions are 1
   const hasAllPermissions = hasAdd && hasEdit && hasView
 
-  console.log('Permission Check →', { hasAdd, hasEdit, hasView, hasAllPermissions })
+  console.log('Permission Check →', {
+    hasAdd,
+    hasEdit,
+    hasView,
+    hasAllPermissions,
+  })
 
   return hasAllPermissions ? <>{children}</> : null
 }

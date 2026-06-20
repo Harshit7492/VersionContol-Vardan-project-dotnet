@@ -52,24 +52,8 @@ type VersionItem = {
 type ProjectForm = {
   name: string
   description: string
+ UpdatedByUserId: number
   versions: VersionItem[]
-}
-
-type FilePayload = {
-  FileName: string
-  FileDescription: string
-  FilePath: string
-}
-
-type VersionPayload = {
-  VersionName: string
-  Files: FilePayload[]
-}
-
-type ProjectPayload = {
-  ProjectName: string
-  ProjectDescription: string
-  ProjectVersions: VersionPayload[]
 }
 
 type EditProjectPageProps = {
@@ -84,20 +68,56 @@ function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-function buildProjectPayload(data: ProjectForm): ProjectPayload {
-  return {
-    ProjectName: data.name.trim(),
-    ProjectDescription: data.description.trim() || '',
-    ProjectVersions: data.versions.map((version) => ({
-      VersionName: version.name.trim(),
-      Files: (version.files || []).map((file) => ({
-        FileName: file.fileName.trim() || file.file?.name || 'Untitled',
-        FileDescription: file.fileDescription?.trim() || '',
-        FilePath: file.filePath || file.fileUrl || file.file?.name || '',
-      })),
-    })),
-  }
+// Note: project payload builder removed — we use multipart FormData for updates
+
+// Build FormData for updating project (supports file uploads)
+const buildFormData = (data: ProjectForm) => {
+  const formData = new FormData()
+
+  formData.append('ProjectName', data.name)
+  formData.append('ProjectDescription', data.description)
+  formData.append('UpdatedByUserId', localStorage.getItem('current_user_id') || '2')
+  data.versions.forEach((version, versionIndex) => {
+    formData.append(
+      `ProjectVersions[${versionIndex}].VersionName`,
+      version.name
+    )
+    formData.append(
+      `ProjectVersions[${versionIndex}].CreatedByUserId`,
+      localStorage.getItem('current_user_id') || '2'
+    )
+
+    version.files.forEach((file, fileIndex) => {
+      formData.append(
+        `ProjectVersions[${versionIndex}].Files[${fileIndex}].FileName`,
+        file.fileName || file.file?.name || ''
+      )
+
+      formData.append(
+        `ProjectVersions[${versionIndex}].Files[${fileIndex}].FileDescription`,
+        file.fileDescription || ''
+      )
+
+      formData.append(
+        `ProjectVersions[${versionIndex}].Files[${fileIndex}].FilePath`,
+        file.filePath || file.fileUrl || file.file?.name || ''
+      )
+      formData.append(
+        `ProjectVersions[${versionIndex}].Files[${fileIndex}].CreatedByUserId`,
+        localStorage.getItem('current_user_id') || '2'
+      )
+      if (file.file) {
+        formData.append(
+          `ProjectVersions[${versionIndex}].Files[${fileIndex}].UploadFile`,
+          file.file
+        )
+      }
+    })
+  })
+
+  return formData
 }
+
 
 export function EditProjectPage({ projectId }: EditProjectPageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -108,6 +128,7 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
     defaultValues: {
       name: '',
       description: '',
+      UpdatedByUserId: 2,
       versions: [],
     },
   })
@@ -116,6 +137,19 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
     control: form.control,
     name: 'versions',
   })
+
+  useEffect(() => {
+    return () => {
+      const versions = form.getValues('versions') || []
+      versions.forEach((version) => {
+        (version.files || []).forEach((file) => {
+          if (file.fileUrl) {
+            URL.revokeObjectURL(file.fileUrl)
+          }
+        })
+      })
+    }
+  }, [form])
 
   useEffect(() => {
     if (!projectId) return
@@ -134,6 +168,7 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
         const normalizedForm: ProjectForm = {
           name: rawProject.ProjectName ?? rawProject.name ?? '',
           description: rawProject.ProjectDescription ?? rawProject.description ?? '',
+          UpdatedByUserId: parseInt(localStorage.getItem('current_user_id') || '2'),
           versions: (rawProject.Versions || rawProject.versions || []).map((version: any, versionIndex: number) => ({
             name: version.VersionName ?? version.name ?? `Version ${versionIndex + 1}`,
             files: (version.Files || version.files || []).map((file: any) => ({
@@ -171,12 +206,12 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
   const handleFileSelect = (versionIndex: number, fileIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      if (file.size > 100 * 1024 * 1024) {
-        toast.error('File too large', {
-          description: 'Maximum file size is 100MB',
-        })
-        return
-      }
+      // if (file.size > 100 * 1024 * 1024) {
+      //   toast.error('File too large', {
+      //     description: 'Maximum file size is 100MB',
+      //   })
+      //   return
+      // }
 
       const fileUrl = URL.createObjectURL(file)
       form.setValue(`versions.${versionIndex}.files.${fileIndex}.file`, file)
@@ -247,14 +282,14 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
     setIsSubmitting(true)
 
     try {
-      const payload = buildProjectPayload(data)
-      const response = await projectService.UpdateProject(projectId, payload)
+      const formData = buildFormData(data)
+      const response = await projectService.UpdateProject(projectId, formData)
       const isSuccess = response?.Issuccess ?? response?.Success ?? false
       if (!isSuccess) {
         throw new Error(response?.message || response?.Message || 'Failed to update project')
       }
 
-      const updatedProject = response.response ?? payload
+      const updatedProject = response.response ?? data
       const existingProjects = JSON.parse(localStorage.getItem('projects') || '[]')
       const index = existingProjects.findIndex(
         (p: any) => p.ProjectId === Number(projectId) || p.id === projectId || p.projectId === projectId,
@@ -346,7 +381,7 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="container mx-auto px-4 py-4">
           <nav className="flex items-center space-x-1 text-sm text-muted-foreground">
             <button

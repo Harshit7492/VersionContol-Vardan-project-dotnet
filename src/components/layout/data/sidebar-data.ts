@@ -1,20 +1,17 @@
 import {
   LayoutDashboard,
-  Monitor,
+  // Monitor,
   ListTodo,
   HelpCircle,
-  Bell,
-  Package,
-  Palette,
+  // Bell,
+  // Palette,
   Settings,
-  Wrench,
+  // Wrench,
   UserCog,
   Users,
-  MessagesSquare,
   AudioWaveform,
   Command,
   GalleryVerticalEnd,
-  FileText, // Imported an icon for User Details List
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -81,37 +78,37 @@ export const sidebarData: SidebarData = {
     {
       title: 'Other',
       items: [
-        {
-          title: 'Settings',
-          icon: Settings,
-          items: [
-            {
-              title: 'Profile',
-              url: '/settings',
-              icon: UserCog,
-            },
-            {
-              title: 'Account',
-              url: '/settings/account',
-              icon: Wrench,
-            },
-            {
-              title: 'Appearance',
-              url: '/settings/appearance',
-              icon: Palette,
-            },
-            {
-              title: 'Notifications',
-              url: '/settings/notifications',
-              icon: Bell,
-            },
-            {
-              title: 'Display',
-              url: '/settings/display',
-              icon: Monitor,
-            },
-          ],
-        },
+        // {
+        //   title: 'Settings',
+        //   icon: Settings,
+        //   items: [
+        //     {
+        //       title: 'Profile',
+        //       url: '/settings',
+        //       icon: UserCog,
+        //     },
+        //     {
+        //       title: 'Account',
+        //       url: '/settings/account',
+        //       icon: Wrench,
+        //     },
+        //     {
+        //       title: 'Appearance',
+        //       url: '/settings/appearance',
+        //       icon: Palette,
+        //     },
+        //     {
+        //       title: 'Notifications',
+        //       url: '/settings/notifications',
+        //       icon: Bell,
+        //     },
+        //     {
+        //       title: 'Display',
+        //       url: '/settings/display',
+        //       icon: Monitor,
+        //     },
+        //   ],
+        // },
         {
           title: 'Help Center',
           url: '/help-center',

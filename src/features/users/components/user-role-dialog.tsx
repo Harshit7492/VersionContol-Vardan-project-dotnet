@@ -24,8 +24,8 @@ type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
   type: 'Add' | 'Edit'
-  initialData?: any // Accepts the custom row item object from the parent component
-  onSuccess?: () => void // Refreshes the grid data on a successful submit
+  initialData?: any
+  onSuccess?: () => Promise<void> | void
 }
 
 export function UsersRoleDialog({ open, onOpenChange, type, initialData, onSuccess }: Props) {
@@ -42,7 +42,6 @@ export function UsersRoleDialog({ open, onOpenChange, type, initialData, onSucce
     },
   })
 
-  // Synchronize form values whenever modal opens or operational type changes
   useEffect(() => {
     if (open && isEditMode && initialData) {
       setFormData({
@@ -93,7 +92,6 @@ export function UsersRoleDialog({ open, onOpenChange, type, initialData, onSucce
       return
     }
 
-    // Build the payload payload structure dynamically
     const payload = {
       Id: isEditMode ? initialData.Id : 0,
       RoleName: formData.RoleName,
@@ -105,6 +103,7 @@ export function UsersRoleDialog({ open, onOpenChange, type, initialData, onSucce
         Editpermission: formData.Permission.Editpermission,
         Viewpermission: formData.Permission.Viewpermission,
       },
+      CreatedByUserId: parseInt(localStorage.getItem('current_user_id') || '2'),
     }
 
     try {
@@ -118,13 +117,13 @@ export function UsersRoleDialog({ open, onOpenChange, type, initialData, onSucce
         toast.success('Role created successfully')
       }
 
-      // 🔄 Fire the success callback hook to update the dashboard grid
+      onOpenChange(false)
+      resetForm()
+      
       if (onSuccess) {
-        onSuccess()
+        await onSuccess()
       }
       
-      resetForm()
-      onOpenChange(false)
     } catch (error: any) {
       console.error('❌ API Error:', error)
       toast.error(
@@ -154,7 +153,6 @@ export function UsersRoleDialog({ open, onOpenChange, type, initialData, onSucce
         </DialogHeader>
 
         <div className="space-y-5">
-          {/* Role Name */}
           <div className="space-y-2">
             <Label>Role Name</Label>
             <Input
@@ -170,7 +168,6 @@ export function UsersRoleDialog({ open, onOpenChange, type, initialData, onSucce
             />
           </div>
 
-          {/* Role Status Switch */}
           <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
             <div className="space-y-0.5">
               <Label>Role Active Status</Label>
@@ -188,7 +185,6 @@ export function UsersRoleDialog({ open, onOpenChange, type, initialData, onSucce
             />
           </div>
 
-          {/* Permissions Options */}
           <div className="space-y-3">
             <Label className="text-sm font-semibold">Permissions Management</Label>
 

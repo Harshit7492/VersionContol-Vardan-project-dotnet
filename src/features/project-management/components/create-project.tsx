@@ -1,5 +1,5 @@
 // src/features/project-management/components/create-project.tsx
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -54,24 +54,8 @@ type VersionItem = {
 type ProjectForm = {
   name: string
   description: string
+  createdByUserId: number
   versions: VersionItem[]
-}
-
-type FilePayload = {
-  FileName: string
-  FileDescription: string
-  FilePath: string
-}
-
-type VersionPayload = {
-  VersionName: string
-  Files: FilePayload[]
-}
-
-type ProjectPayload = {
-  ProjectName: string
-  ProjectDescription: string
-  ProjectVersions: VersionPayload[]
 }
 
 // Utility function
@@ -83,19 +67,44 @@ function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-function buildProjectPayload(data: ProjectForm): ProjectPayload {
-  return {
-    ProjectName: data.name.trim(),
-    ProjectDescription: data.description.trim() || '',
-    ProjectVersions: data.versions.map((version) => ({
-      VersionName: version.name.trim(),
-      Files: (version.files || []).map((file) => ({
-        FileName: file.fileName.trim() || file.file?.name || 'Untitled',
-        FileDescription: file.fileDescription?.trim() || '',
-        FilePath: file.filePath || file.fileUrl || file.file?.name || '',
-      })),
-    })),
-  }
+const buildFormData = (data: ProjectForm) => {
+  const formData = new FormData()
+
+  formData.append('ProjectName', data.name)
+  formData.append('ProjectDescription', data.description)
+  formData.append('CreatedByUserId', localStorage.getItem('current_user_id') || '2')
+  data.versions.forEach((version, versionIndex) => {
+    formData.append(
+      `ProjectVersions[${versionIndex}].VersionName`,
+      version.name
+    )
+
+    version.files.forEach((file, fileIndex) => {
+      formData.append(
+        `ProjectVersions[${versionIndex}].Files[${fileIndex}].FileName`,
+        file.fileName || file.file?.name || ''
+      )
+
+      formData.append(
+        `ProjectVersions[${versionIndex}].Files[${fileIndex}].FileDescription`,
+        file.fileDescription || ''
+      )
+
+      formData.append(
+        `ProjectVersions[${versionIndex}].Files[${fileIndex}].FilePath`,
+        file.filePath || file.fileUrl || file.file?.name || ''
+      )
+
+      if (file.file) {
+        formData.append(
+          `ProjectVersions[${versionIndex}].Files[${fileIndex}].UploadFile`,
+          file.file
+        )
+      }
+    })
+  })
+
+  return formData
 }
 
 export function CreateProjectPage() {
@@ -106,6 +115,7 @@ export function CreateProjectPage() {
     defaultValues: {
       name: '',
       description: '',
+      createdByUserId: 2,
       versions: [],
     },
   })
@@ -115,17 +125,30 @@ export function CreateProjectPage() {
     name: 'versions',
   })
 
+  useEffect(() => {
+    return () => {
+      const versions = form.getValues('versions') || []
+      versions.forEach((version) => {
+        (version.files || []).forEach((file) => {
+          if (file.fileUrl) {
+            URL.revokeObjectURL(file.fileUrl)
+          }
+        })
+      })
+    }
+  }, [form])
+
   // File selection handler
   const handleFileSelect = (versionIndex: number, fileIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       // Validate file size (max 100MB)
-      if (file.size > 100 * 1024 * 1024) {
-        toast.error('File too large', {
-          description: 'Maximum file size is 100MB',
-        })
-        return
-      }
+      // if (file.size > 100 * 1024 * 1024) {
+      //   toast.error('File too large', {
+      //     description: 'Maximum file size is 100MB',
+      //   })
+      //   return
+      // }
 
       const fileUrl = URL.createObjectURL(file)
       form.setValue(`versions.${versionIndex}.files.${fileIndex}.file`, file)
@@ -195,48 +218,49 @@ export function CreateProjectPage() {
   }
 
   // Form submission
-  const onSubmit = async (data: ProjectForm) => {
-    if (!data.name.trim()) {
-      toast.error('Project name is required')
-      return
-    }
-
-    setIsSubmitting(true)
-
-    try {
-      const payload = buildProjectPayload(data)
-      const response = await projectService.AddProjects(payload)
-      const isSuccess = response?.Issuccess ?? response?.Success ?? false
-      if (!isSuccess) {
-        throw new Error(response?.message || response?.Message || 'Failed to create project')
-      }
-
-      const createdProject = response.response ?? payload
-      const existingProjects = JSON.parse(localStorage.getItem('projects') || '[]')
-      existingProjects.push(createdProject)
-      localStorage.setItem('projects', JSON.stringify(existingProjects))
-
-      window.dispatchEvent(new CustomEvent('projectCreated', { detail: createdProject }))
-
-      const projectName = createdProject.ProjectName ?? createdProject.name ?? 'Project'
-      const versionCount = createdProject.ProjectVersions?.length ?? createdProject.versions?.length ?? 0
-
-      toast.success('Project created successfully!', {
-        description: `${projectName} with ${versionCount} version(s)`,
-      })
-
-      setShowCreatePage(false)
-      form.reset()
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Please try again later'
-      console.error('Error creating project:', error)
-      toast.error('Failed to create project', {
-        description: message,
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
+ const onSubmit = async (data: ProjectForm) => {
+  if (!data.name.trim()) {
+    toast.error('Project name is required')
+    return
   }
+
+  setIsSubmitting(true)
+
+  try {
+    const formData = buildFormData(data)
+
+    const response =
+      await projectService.AddProjects(formData)
+
+    const isSuccess =
+      response?.Issuccess ??
+      response?.Success ??
+      false
+
+    if (!isSuccess) {
+      throw new Error(
+        response?.message ||
+          response?.Message ||
+          'Failed to create project'
+      )
+    }
+
+    toast.success(
+      'Project created successfully!'
+    )
+
+    form.reset()
+    setShowCreatePage(false)
+  } catch (error) {
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : 'Failed to create project'
+    )
+  } finally {
+    setIsSubmitting(false)
+  }
+}
 
   // Save draft
   const handleSaveDraft = () => {
@@ -288,7 +312,7 @@ export function CreateProjectPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header with Simple Breadcrumb */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="container mx-auto px-4 py-4">
           <nav className="flex items-center space-x-1 text-sm text-muted-foreground">
             <button 
@@ -325,7 +349,7 @@ export function CreateProjectPage() {
             <Button
               variant="ghost"
               size="sm"
-              // onClick={() => navigate }
+              onClick={() => navigate({ to: '/tasks' })}
               className="gap-2 hover:bg-muted"
             >
               <ArrowLeft className="h-4 w-4" />

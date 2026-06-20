@@ -1,15 +1,12 @@
-import { getRouteApi } from '@tanstack/react-router'
 import { ConfigDrawer } from '@/components/config-drawer'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { UsersDialogs } from './components/users-dialogs'
 import { UsersPrimaryButtons } from './components/users-primary-buttons'
 import { UsersProvider } from './components/users-provider'
 import { UsersTable } from './components/users-table'
 
-const route = getRouteApi('/_authenticated/users/')
 
 export function Users() {
   
@@ -22,7 +19,7 @@ export function Users() {
        < div className='me-auto'>
        User Management
        </div>
-        <ThemeSwitch />
+        {/* <ThemeSwitch /> */}
         <ConfigDrawer />
         <ProfileDropdown />
       </Header>

@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { showSubmittedData } from '@/lib/show-submitted-data';
-import { Button } from '@/components/ui/button';
+import { useEffect } from 'react'
+import { useForm, useFieldArray } from 'react-hook-form'
+import { Plus, Trash } from 'lucide-react'
+import { showSubmittedData } from '@/lib/show-submitted-data'
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -9,9 +10,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import {
   Sheet,
   SheetClose,
@@ -20,35 +20,35 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
-import { Plus, Trash } from 'lucide-react';
-import { useTasks } from './tasks-provider';
+} from '@/components/ui/sheet'
+import { Textarea } from '@/components/ui/textarea'
+import { useTasks } from './tasks-provider'
 
 type TaskMutateDrawerProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  currentRow?: any; // Replace with proper type if available
-};
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  currentRow?: any // Replace with proper type if available
+}
 
 type ProjectFile = {
-  fileName: string;
-  isExe?: boolean;
-};
+  fileName: string
+  isExe?: boolean
+}
 
 type ProjectVersion = {
-  name: string;
-  files?: ProjectFile[];
-};
+  name: string
+  files?: ProjectFile[]
+}
 
 type Project = {
-  name: string;
-  description?: string;
-  versions?: ProjectVersion[];
-};
+  name: string
+  description?: string
+  versions?: ProjectVersion[]
+}
 
 type ProjectForm = {
-  projects: Project[];
-};
+  projects: Project[]
+}
 
 function ProjectFiles({
   control,
@@ -56,79 +56,74 @@ function ProjectFiles({
   projectIndex,
   versionIndex,
 }: {
-  control: any;
-  register: any;
-  projectIndex: number;
-  versionIndex: number;
+  control: any
+  register: any
+  projectIndex: number
+  versionIndex: number
 }) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: `projects.${projectIndex}.versions.${versionIndex}.files` as const,
-  });
+  })
 
   return (
-    <div className="space-y-3">
-  <div className="flex items-center justify-between">
-    <FormLabel>Files</FormLabel>
+    <div className='space-y-3'>
+      <div className='flex items-center justify-between'>
+        <FormLabel>Files</FormLabel>
 
-    <Button
-      size="sm"
-      variant="outline"
-      type="button"
-      onClick={() =>
-        append({
-          fileName: '',
-          file: null,
-          isExe: false,
-        })
-      }
-    >
-      <Plus size={14} className="mr-1" />
-      Add File
-    </Button>
-  </div>
-
-  {fields.length === 0 ? (
-    <div className="text-sm text-muted-foreground">
-      No files added yet.
-    </div>
-  ) : (
-    <div className="space-y-3">
-      {fields.map((file, fi) => (
-        <div
-          key={file.id}
-          className="rounded-lg border p-4 space-y-3"
+        <Button
+          size='sm'
+          variant='outline'
+          type='button'
+          onClick={() =>
+            append({
+              fileName: '',
+              file: null,
+              isExe: false,
+            })
+          }
         >
-          <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto] items-end">
-            {/* File Name */}
-            <div className="space-y-1">
-              <FormLabel>File Name</FormLabel>
-              <Input
-                placeholder="Setup v1.0"
-                {...register(
-                  `projects.${projectIndex}.versions.${versionIndex}.files.${fi}.fileName` as const
-                )}
-              />
-            </div>
+          <Plus size={14} className='mr-1' />
+          Add File
+        </Button>
+      </div>
 
-            {/* Upload File */}
-            <div className="space-y-1">
-              <FormLabel>Upload File</FormLabel>
-              <Input
-                type="file"
-                onChange={(e) => {
-                  const selectedFile = e.target.files?.[0] ?? null
+      {fields.length === 0 ? (
+        <div className='text-sm text-muted-foreground'>No files added yet.</div>
+      ) : (
+        <div className='space-y-3'>
+          {fields.map((file, fi) => (
+            <div key={file.id} className='space-y-3 rounded-lg border p-4'>
+              <div className='grid items-end gap-3 md:grid-cols-[1fr_1fr_auto_auto]'>
+                {/* File Name */}
+                <div className='space-y-1'>
+                  <FormLabel>File Name</FormLabel>
+                  <Input
+                    placeholder='Setup v1.0'
+                    {...register(
+                      `projects.${projectIndex}.versions.${versionIndex}.files.${fi}.fileName` as const
+                    )}
+                  />
+                </div>
 
-                  // setValue(
-                  //   `projects.${projectIndex}.versions.${versionIndex}.files.${fi}.file`,
-                  //   selectedFile
-                  // )
-                }}
-              />
-            </div>
+                {/* Upload File */}
+                <div className='space-y-1'>
+                  <FormLabel>Upload File</FormLabel>
+                  <Input
+                    type='file'
+                    // onChange={(e) => {
+                    // const selectedFile = e.target.files?.[0] ?? null
 
-            {/* EXE Checkbox */}
-            {/* <label className="flex items-center gap-2 rounded-md border px-3 py-2 h-10 cursor-pointer">
+                    // setValue(
+                    //   `projects.${projectIndex}.versions.${versionIndex}.files.${fi}.file`,
+                    //   selectedFile
+                    // )
+                    // }}
+                  />
+                </div>
+
+                {/* EXE Checkbox */}
+                {/* <label className="flex items-center gap-2 rounded-md border px-3 py-2 h-10 cursor-pointer">
               <input
                 type="checkbox"
                 {...register(
@@ -138,22 +133,22 @@ function ProjectFiles({
               EXE
             </label> */}
 
-            {/* Delete */}
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              onClick={() => remove(fi)}
-            >
-              <Trash size={16} />
-            </Button>
-          </div>
+                {/* Delete */}
+                <Button
+                  type='button'
+                  size='icon'
+                  variant='ghost'
+                  onClick={() => remove(fi)}
+                >
+                  <Trash size={16} />
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
-  )}
-</div>
-  );
+  )
 }
 
 function ProjectItem({
@@ -163,31 +158,35 @@ function ProjectItem({
   onRemoveProject,
   isEditing,
 }: {
-  control: any;
-  register: any;
-  index: number;
-  onRemoveProject: () => void;
-  isEditing: boolean;
+  control: any
+  register: any
+  index: number
+  onRemoveProject: () => void
+  isEditing: boolean
 }) {
-  const { fields: versions, append, remove } = useFieldArray({
+  const {
+    fields: versions,
+    append,
+    remove,
+  } = useFieldArray({
     control,
     name: `projects.${index}.versions` as const,
-  });
+  })
 
   return (
-    <div className="rounded border p-4 space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className='space-y-4 rounded border p-4'>
+      <div className='flex flex-wrap items-center justify-between gap-2'>
         <div>
-          <h4 className="text-sm font-semibold">Project #{index + 1}</h4>
-          <p className="text-sm text-muted-foreground">
+          <h4 className='text-sm font-semibold'>Project #{index + 1}</h4>
+          <p className='text-sm text-muted-foreground'>
             Add versions, files, and EXE details here.
           </p>
         </div>
         {!isEditing && (
           <Button
-            type="button"
-            size="sm"
-            variant="outline"
+            type='button'
+            size='sm'
+            variant='outline'
             onClick={onRemoveProject}
           >
             <Trash size={14} /> Remove
@@ -202,7 +201,7 @@ function ProjectItem({
           <FormItem>
             <FormLabel>Project Name</FormLabel>
             <FormControl>
-              <Input {...field} placeholder="e.g. IPIS" />
+              <Input {...field} placeholder='e.g. IPIS' />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -216,33 +215,33 @@ function ProjectItem({
           <FormItem>
             <FormLabel>Description</FormLabel>
             <FormControl>
-              <Textarea {...field} placeholder="Optional project description" />
+              <Textarea {...field} placeholder='Optional project description' />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
 
-      <div className="space-y-4">
+      <div className='space-y-4'>
         {versions.length === 0 ? (
-          <div className="text-sm text-muted-foreground">No versions yet.</div>
+          <div className='text-sm text-muted-foreground'>No versions yet.</div>
         ) : (
           versions.map((version, vi) => (
             <div
               key={version.id}
-              className="rounded border p-3 space-y-3 bg-muted/30"
+              className='space-y-3 rounded border bg-muted/30 p-3'
             >
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className='flex flex-wrap items-center justify-between gap-2'>
                 <div>
-                  <h5 className="font-medium">Version {vi + 1}</h5>
-                  <p className="text-sm text-muted-foreground">
+                  <h5 className='font-medium'>Version {vi + 1}</h5>
+                  <p className='text-sm text-muted-foreground'>
                     Manage files and EXE details for this version.
                   </p>
                 </div>
                 <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
+                  type='button'
+                  size='sm'
+                  variant='outline'
                   onClick={() => remove(vi)}
                 >
                   <Trash size={14} /> Remove version
@@ -256,7 +255,7 @@ function ProjectItem({
                   <FormItem>
                     <FormLabel>Version Name</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="v1, v2, v1.0.0" />
+                      <Input {...field} placeholder='v1, v2, v1.0.0' />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -274,18 +273,16 @@ function ProjectItem({
         )}
 
         <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            append({ name: `v${versions.length + 1}`, files: [] })
-          }
+          type='button'
+          variant='outline'
+          size='sm'
+          onClick={() => append({ name: `v${versions.length + 1}`, files: [] })}
         >
           <Plus size={14} /> Add version
         </Button>
       </div>
     </div>
-  );
+  )
 }
 
 export function TasksMutateDrawer({
@@ -293,7 +290,7 @@ export function TasksMutateDrawer({
   onOpenChange,
   currentRow,
 }: TaskMutateDrawerProps) {
-  const { setProjects } = useTasks();
+  const { setProjects } = useTasks()
 
   const form = useForm<ProjectForm>({
     defaultValues: {
@@ -305,13 +302,13 @@ export function TasksMutateDrawer({
         },
       ],
     },
-  });
+  })
 
-  const { control, handleSubmit, register, reset, formState } = form;
+  const { control, handleSubmit, register, reset, formState } = form
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'projects',
-  });
+  })
 
   // Reset form when drawer opens/closes or currentRow changes
   useEffect(() => {
@@ -324,17 +321,17 @@ export function TasksMutateDrawer({
             versions: currentRow.versions || [],
           },
         ],
-      });
+      })
     } else {
       reset({
         projects: [{ name: '', description: '', versions: [] }],
-      });
+      })
     }
-  }, [currentRow, reset]);
+  }, [currentRow, reset])
 
   const onSubmit = (data: ProjectForm) => {
     // Deep clean the data
-    const normalized = JSON.parse(JSON.stringify(data)) as ProjectForm;
+    const normalized = JSON.parse(JSON.stringify(data)) as ProjectForm
 
     normalized.projects = normalized.projects.map((project) => ({
       ...project,
@@ -345,50 +342,52 @@ export function TasksMutateDrawer({
           isExe: file?.isExe === true,
         })),
       })),
-    }));
+    }))
 
     if (currentRow?.__projectIndex != null) {
       // Edit mode
       setProjects((prev) => {
-        const next = [...prev];
-        next[currentRow.__projectIndex] = normalized.projects[0];
+        const next = [...prev]
+        next[currentRow.__projectIndex] = normalized.projects[0]
         try {
-          localStorage.setItem('projects', JSON.stringify(next));
+          localStorage.setItem('projects', JSON.stringify(next))
         } catch {
           // ignore
         }
-        return next;
-      });
+        return next
+      })
     } else {
       // Create mode (can add multiple)
       setProjects((prev) => {
-        const next = [...prev, ...normalized.projects];
+        const next = [...prev, ...normalized.projects]
         try {
-          localStorage.setItem('projects', JSON.stringify(next));
+          localStorage.setItem('projects', JSON.stringify(next))
         } catch {
           // ignore
         }
-        return next;
-      });
+        return next
+      })
     }
 
-    showSubmittedData(normalized);
-    onOpenChange(false);
-  };
+    showSubmittedData(normalized)
+    onOpenChange(false)
+  }
 
   return (
     <Sheet
       open={open}
       onOpenChange={(open) => {
-        onOpenChange(open);
+        onOpenChange(open)
         if (!open) {
-          reset();
+          reset()
         }
       }}
     >
-      <SheetContent className="flex flex-col sm:max-w-2xl">
-        <SheetHeader className="text-start">
-          <SheetTitle>{currentRow ? 'Edit Project' : 'Create Projects'}</SheetTitle>
+      <SheetContent className='flex flex-col sm:max-w-2xl'>
+        <SheetHeader className='text-start'>
+          <SheetTitle>
+            {currentRow ? 'Edit Project' : 'Create Projects'}
+          </SheetTitle>
           <SheetDescription>
             {currentRow
               ? 'Update project data, versions and file details.'
@@ -398,11 +397,11 @@ export function TasksMutateDrawer({
 
         <Form {...form}>
           <form
-            id="projects-form"
+            id='projects-form'
             onSubmit={handleSubmit(onSubmit)}
-            className="flex-1 space-y-6 overflow-y-auto px-1 py-4"
+            className='flex-1 space-y-6 overflow-y-auto px-1 py-4'
           >
-            <div className="space-y-6">
+            <div className='space-y-6'>
               {fields.map((field, idx) => (
                 <ProjectItem
                   key={field.id}
@@ -416,14 +415,14 @@ export function TasksMutateDrawer({
 
               {!currentRow && (
                 <Button
-                  type="button"
-                  variant="outline"
+                  type='button'
+                  variant='outline'
                   onClick={() =>
                     append({ name: '', description: '', versions: [] })
                   }
-                  className="w-full"
+                  className='w-full'
                 >
-                  <Plus size={14} className="mr-2" />
+                  <Plus size={14} className='mr-2' />
                   Add another project
                 </Button>
               )}
@@ -431,17 +430,21 @@ export function TasksMutateDrawer({
           </form>
         </Form>
 
-        <SheetFooter className="gap-3">
+        <SheetFooter className='gap-3'>
           <SheetClose asChild>
-            <Button variant="outline" type="button">
+            <Button variant='outline' type='button'>
               Cancel
             </Button>
           </SheetClose>
-          <Button form="projects-form" type="submit" disabled={formState.isSubmitting}>
+          <Button
+            form='projects-form'
+            type='submit'
+            disabled={formState.isSubmitting}
+          >
             {currentRow ? 'Update Project' : 'Save Projects'}
           </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
-  );
+  )
 }

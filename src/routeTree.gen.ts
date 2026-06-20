@@ -21,6 +21,7 @@ import { Route as errors401RouteImport } from './routes/(errors)/401'
 import { Route as authSignInRouteImport } from './routes/(auth)/sign-in'
 import { Route as AuthenticatedSettingsRouteRouteImport } from './routes/_authenticated/settings/route'
 import { Route as AuthenticatedUsersIndexRouteImport } from './routes/_authenticated/users/index'
+import { Route as AuthenticatedUserSideIndexRouteImport } from './routes/_authenticated/user-side/index'
 import { Route as AuthenticatedTasksIndexRouteImport } from './routes/_authenticated/tasks/index'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
 import { Route as AuthenticatedHelpCenterIndexRouteImport } from './routes/_authenticated/help-center/index'
@@ -95,6 +96,12 @@ const AuthenticatedUsersIndexRoute = AuthenticatedUsersIndexRouteImport.update({
   path: '/users/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedUserSideIndexRoute =
+  AuthenticatedUserSideIndexRouteImport.update({
+    id: '/user-side/',
+    path: '/user-side/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedTasksIndexRoute = AuthenticatedTasksIndexRouteImport.update({
   id: '/tasks/',
   path: '/tasks/',
@@ -192,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/help-center/': typeof AuthenticatedHelpCenterIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/tasks/': typeof AuthenticatedTasksIndexRoute
+  '/user-side/': typeof AuthenticatedUserSideIndexRoute
   '/users/': typeof AuthenticatedUsersIndexRoute
   '/tasks/create/': typeof AuthenticatedTasksCreateIndexRoute
   '/users/roles/': typeof AuthenticatedUsersRolesIndexRoute
@@ -217,6 +225,7 @@ export interface FileRoutesByTo {
   '/help-center': typeof AuthenticatedHelpCenterIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
+  '/user-side': typeof AuthenticatedUserSideIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
   '/tasks/create': typeof AuthenticatedTasksCreateIndexRoute
   '/users/roles': typeof AuthenticatedUsersRolesIndexRoute
@@ -245,6 +254,7 @@ export interface FileRoutesById {
   '/_authenticated/help-center/': typeof AuthenticatedHelpCenterIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
+  '/_authenticated/user-side/': typeof AuthenticatedUserSideIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
   '/_authenticated/tasks/create/': typeof AuthenticatedTasksCreateIndexRoute
   '/_authenticated/users/roles/': typeof AuthenticatedUsersRolesIndexRoute
@@ -273,6 +283,7 @@ export interface FileRouteTypes {
     | '/help-center/'
     | '/settings/'
     | '/tasks/'
+    | '/user-side/'
     | '/users/'
     | '/tasks/create/'
     | '/users/roles/'
@@ -298,6 +309,7 @@ export interface FileRouteTypes {
     | '/help-center'
     | '/settings'
     | '/tasks'
+    | '/user-side'
     | '/users'
     | '/tasks/create'
     | '/users/roles'
@@ -325,6 +337,7 @@ export interface FileRouteTypes {
     | '/_authenticated/help-center/'
     | '/_authenticated/settings/'
     | '/_authenticated/tasks/'
+    | '/_authenticated/user-side/'
     | '/_authenticated/users/'
     | '/_authenticated/tasks/create/'
     | '/_authenticated/users/roles/'
@@ -427,6 +440,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/users/'
       preLoaderRoute: typeof AuthenticatedUsersIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/user-side/': {
+      id: '/_authenticated/user-side/'
+      path: '/user-side'
+      fullPath: '/user-side/'
+      preLoaderRoute: typeof AuthenticatedUserSideIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/tasks/': {
@@ -554,6 +574,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
   AuthenticatedHelpCenterIndexRoute: typeof AuthenticatedHelpCenterIndexRoute
   AuthenticatedTasksIndexRoute: typeof AuthenticatedTasksIndexRoute
+  AuthenticatedUserSideIndexRoute: typeof AuthenticatedUserSideIndexRoute
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute
   AuthenticatedTasksCreateIndexRoute: typeof AuthenticatedTasksCreateIndexRoute
   AuthenticatedUsersRolesIndexRoute: typeof AuthenticatedUsersRolesIndexRoute
@@ -568,6 +589,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
   AuthenticatedHelpCenterIndexRoute: AuthenticatedHelpCenterIndexRoute,
   AuthenticatedTasksIndexRoute: AuthenticatedTasksIndexRoute,
+  AuthenticatedUserSideIndexRoute: AuthenticatedUserSideIndexRoute,
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,
   AuthenticatedTasksCreateIndexRoute: AuthenticatedTasksCreateIndexRoute,
   AuthenticatedUsersRolesIndexRoute: AuthenticatedUsersRolesIndexRoute,

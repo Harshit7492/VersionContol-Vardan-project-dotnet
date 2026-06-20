@@ -111,9 +111,7 @@ describe('UserAuthForm', () => {
   it('navigates to redirectTo when provided', async () => {
     vi.clearAllMocks()
 
-    const { getByRole, getByLabelText } = await render(
-      <UserAuthForm redirectTo='/settings' />
-    )
+    const { getByRole, getByLabelText } = await render(<UserAuthForm />)
 
     await userEvent.fill(getByRole('textbox', { name: /Email/i }), 'a@b.com')
     await userEvent.fill(getByLabelText('Password'), '1234567')

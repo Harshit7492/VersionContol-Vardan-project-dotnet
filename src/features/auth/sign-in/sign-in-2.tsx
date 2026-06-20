@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+// import { Link } from '@tanstack/react-router'
 import { Logo } from '@/assets/logo'
 import { cn } from '@/lib/utils'
 import dashboardDark from './assets/dashboard-dark.png'
@@ -22,12 +22,12 @@ export function SignIn2() {
               Enter your email and password below to log into{' '}
               <br className='max-sm:hidden' /> your account. Don't have an
               account?{' '}
-              <Link
-                to='/sign-up'
+              <a
+                href='/sign-up'
                 className='text-nowrap underline underline-offset-4 hover:text-primary'
               >
                 Sign Up
-              </Link>
+              </a>
             </p>
           </div>
           <UserAuthForm />
