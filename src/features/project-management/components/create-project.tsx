@@ -34,6 +34,7 @@ import {
 import { toast } from 'sonner'
 import { useNavigate } from '@tanstack/react-router'
 import { projectService } from '@/lib/api/projectService'
+import { fileStorageService } from '@/lib/api/fileStorageService'
 
 // Form types
 type FileItem = {
@@ -65,46 +66,6 @@ function formatFileSize(bytes: number): string {
   const sizes = ['Bytes', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
-
-const buildFormData = (data: ProjectForm) => {
-  const formData = new FormData()
-
-  formData.append('ProjectName', data.name)
-  formData.append('ProjectDescription', data.description)
-  formData.append('CreatedByUserId', localStorage.getItem('current_user_id') || '2')
-  data.versions.forEach((version, versionIndex) => {
-    formData.append(
-      `ProjectVersions[${versionIndex}].VersionName`,
-      version.name
-    )
-
-    version.files.forEach((file, fileIndex) => {
-      formData.append(
-        `ProjectVersions[${versionIndex}].Files[${fileIndex}].FileName`,
-        file.fileName || file.file?.name || ''
-      )
-
-      formData.append(
-        `ProjectVersions[${versionIndex}].Files[${fileIndex}].FileDescription`,
-        file.fileDescription || ''
-      )
-
-      formData.append(
-        `ProjectVersions[${versionIndex}].Files[${fileIndex}].FilePath`,
-        file.filePath || file.fileUrl || file.file?.name || ''
-      )
-
-      if (file.file) {
-        formData.append(
-          `ProjectVersions[${versionIndex}].Files[${fileIndex}].UploadFile`,
-          file.file
-        )
-      }
-    })
-  })
-
-  return formData
 }
 
 export function CreateProjectPage() {
@@ -227,30 +188,56 @@ export function CreateProjectPage() {
   setIsSubmitting(true)
 
   try {
-    const formData = buildFormData(data)
+    const processSubmission = async () => {
+      const payloadData = { ...data, versions: data.versions.map(v => ({ ...v, files: [...v.files] })) }
 
-    const response =
-      await projectService.AddProjects(formData)
+      for (let i = 0; i < payloadData.versions.length; i++) {
+        for (let j = 0; j < payloadData.versions[i].files.length; j++) {
+          const fileItem = data.versions[i].files[j];
+          if (fileItem.file) {
+            const formData = new FormData()
+            formData.append('file', fileItem.file)
+            
+            await fileStorageService.UploadFile(formData).then((res) => {
+              payloadData.versions[i].files[j].filePath = res.Url
+              if (!payloadData.versions[i].files[j].fileName) {
+                payloadData.versions[i].files[j].fileName = res.FileName
+              }
+            })
+          } else {
+            payloadData.versions[i].files[j].filePath = fileItem.filePath || fileItem.fileUrl || ''
+          }
+        }
+      }
 
-    const isSuccess =
-      response?.Issuccess ??
-      response?.Success ??
-      false
+      const payload = {
+        ProjectName: payloadData.name,
+        ProjectDescription: payloadData.description,
+        CreatedByUserId: parseInt(localStorage.getItem('current_user_id') || '2', 10),
+        ProjectVersions: payloadData.versions.map((version) => ({
+          VersionName: version.name,
+          Files: version.files.map((file) => ({
+            FileName: file.fileName || file.file?.name || '',
+            FileDescription: file.fileDescription || '',
+            FilePath: file.filePath || ''
+          }))
+        }))
+      }
 
-    if (!isSuccess) {
-      throw new Error(
-        response?.message ||
-          response?.Message ||
-          'Failed to create project'
-      )
+      const response = await projectService.AddProjects(payload)
+
+      const isSuccess = response?.Issuccess ?? response?.Success ?? false
+
+      if (!isSuccess) {
+        throw new Error(response?.message || response?.Message || 'Failed to create project')
+      }
+
+      toast.success('Project created successfully!')
+      form.reset()
+      setShowCreatePage(false)
     }
 
-    toast.success(
-      'Project created successfully!'
-    )
-
-    form.reset()
-    setShowCreatePage(false)
+    await processSubmission();
   } catch (error) {
     toast.error(
       error instanceof Error

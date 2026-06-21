@@ -33,6 +33,7 @@ import {
 import { toast } from 'sonner'
 import { useNavigate } from '@tanstack/react-router'
 import { projectService } from '@/lib/api/projectService'
+import { fileStorageService } from '@/lib/api/fileStorageService'
 
 type FileItem = {
   fileName: string
@@ -71,54 +72,6 @@ function formatFileSize(bytes: number): string {
 // Note: project payload builder removed — we use multipart FormData for updates
 
 // Build FormData for updating project (supports file uploads)
-const buildFormData = (data: ProjectForm) => {
-  const formData = new FormData()
-
-  formData.append('ProjectName', data.name)
-  formData.append('ProjectDescription', data.description)
-  formData.append('UpdatedByUserId', localStorage.getItem('current_user_id') || '2')
-  data.versions.forEach((version, versionIndex) => {
-    formData.append(
-      `ProjectVersions[${versionIndex}].VersionName`,
-      version.name
-    )
-    formData.append(
-      `ProjectVersions[${versionIndex}].CreatedByUserId`,
-      localStorage.getItem('current_user_id') || '2'
-    )
-
-    version.files.forEach((file, fileIndex) => {
-      formData.append(
-        `ProjectVersions[${versionIndex}].Files[${fileIndex}].FileName`,
-        file.fileName || file.file?.name || ''
-      )
-
-      formData.append(
-        `ProjectVersions[${versionIndex}].Files[${fileIndex}].FileDescription`,
-        file.fileDescription || ''
-      )
-
-      formData.append(
-        `ProjectVersions[${versionIndex}].Files[${fileIndex}].FilePath`,
-        file.filePath || file.fileUrl || file.file?.name || ''
-      )
-      formData.append(
-        `ProjectVersions[${versionIndex}].Files[${fileIndex}].CreatedByUserId`,
-        localStorage.getItem('current_user_id') || '2'
-      )
-      if (file.file) {
-        formData.append(
-          `ProjectVersions[${versionIndex}].Files[${fileIndex}].UploadFile`,
-          file.file
-        )
-      }
-    })
-  })
-
-  return formData
-}
-
-
 export function EditProjectPage({ projectId }: EditProjectPageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showEditPage, setShowEditPage] = useState(true)
@@ -282,36 +235,76 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
     setIsSubmitting(true)
 
     try {
-      const formData = buildFormData(data)
-      const response = await projectService.UpdateProject(projectId, formData)
-      const isSuccess = response?.Issuccess ?? response?.Success ?? false
-      if (!isSuccess) {
-        throw new Error(response?.message || response?.Message || 'Failed to update project')
+      const processSubmission = async () => {
+        const payloadData = { ...data, versions: data.versions.map(v => ({ ...v, files: [...v.files] })) }
+
+        for (let i = 0; i < payloadData.versions.length; i++) {
+          for (let j = 0; j < payloadData.versions[i].files.length; j++) {
+            const fileItem = data.versions[i].files[j];
+            if (fileItem.file) {
+              const formData = new FormData()
+              formData.append('file', fileItem.file)
+              
+              await fileStorageService.UploadFile(formData).then((res) => {
+                payloadData.versions[i].files[j].filePath = res.Url
+                if (!payloadData.versions[i].files[j].fileName) {
+                  payloadData.versions[i].files[j].fileName = res.FileName
+                }
+              })
+            } else {
+              payloadData.versions[i].files[j].filePath = fileItem.filePath || fileItem.fileUrl || ''
+            }
+          }
+        }
+
+        const payload = {
+          ProjectName: payloadData.name,
+          ProjectDescription: payloadData.description,
+          UpdatedByUserId: parseInt(localStorage.getItem('current_user_id') || '2', 10),
+          ProjectVersions: payloadData.versions.map((version) => ({
+            VersionName: version.name,
+            CreatedByUserId: parseInt(localStorage.getItem('current_user_id') || '2', 10),
+            Files: version.files.map((file) => ({
+              FileName: file.fileName || file.file?.name || '',
+              FileDescription: file.fileDescription || '',
+              FilePath: file.filePath || '',
+              CreatedByUserId: parseInt(localStorage.getItem('current_user_id') || '2', 10)
+            }))
+          }))
+        }
+
+        const response = await projectService.UpdateProject(projectId, payload)
+        const isSuccess = response?.Issuccess ?? response?.Success ?? false
+        if (!isSuccess) {
+          throw new Error(response?.message || response?.Message || 'Failed to update project')
+        }
+
+        const updatedProject = response.response ?? data
+        const existingProjects = JSON.parse(localStorage.getItem('projects') || '[]')
+        const index = existingProjects.findIndex(
+          (p: any) => p.ProjectId === Number(projectId) || p.id === projectId || p.projectId === projectId,
+        )
+        if (index !== -1) {
+          existingProjects[index] = updatedProject
+        } else {
+          existingProjects.push(updatedProject)
+        }
+        localStorage.setItem('projects', JSON.stringify(existingProjects))
+
+        window.dispatchEvent(new CustomEvent('projectUpdated', { detail: updatedProject }))
+
+        const projectName = updatedProject.ProjectName ?? updatedProject.name ?? 'Project'
+        const versionCount = updatedProject.ProjectVersions?.length ?? updatedProject.versions?.length ?? 0
+
+        toast.success('Project updated successfully!', {
+          description: `${projectName} with ${versionCount} version(s)`,
+        })
+
+        setShowEditPage(false)
+        form.reset()
       }
 
-      const updatedProject = response.response ?? data
-      const existingProjects = JSON.parse(localStorage.getItem('projects') || '[]')
-      const index = existingProjects.findIndex(
-        (p: any) => p.ProjectId === Number(projectId) || p.id === projectId || p.projectId === projectId,
-      )
-      if (index !== -1) {
-        existingProjects[index] = updatedProject
-      } else {
-        existingProjects.push(updatedProject)
-      }
-      localStorage.setItem('projects', JSON.stringify(existingProjects))
-
-      window.dispatchEvent(new CustomEvent('projectUpdated', { detail: updatedProject }))
-
-      const projectName = updatedProject.ProjectName ?? updatedProject.name ?? 'Project'
-      const versionCount = updatedProject.ProjectVersions?.length ?? updatedProject.versions?.length ?? 0
-
-      toast.success('Project updated successfully!', {
-        description: `${projectName} with ${versionCount} version(s)`,
-      })
-
-      setShowEditPage(false)
-      form.reset()
+      await processSubmission();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Please try again later'
       console.error('Error updating project:', error)

@@ -1,15 +1,10 @@
 import apiClient from './apiClient';
 
 export const projectService = {
-  AddProjects: async (formData: FormData) => {
+  AddProjects: async (payload: any) => {
     const response = await apiClient.post(
       '/api/v1/projects/add-project',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
+      payload
     );
 
     return response.data;
@@ -20,16 +15,11 @@ export const projectService = {
   },
  UpdateProject: async (
   projectId: string,
-  formData: FormData
+  payload: any
 ) => {
   const response = await apiClient.put(
     `/api/v1/projects/update-project/${projectId}`,
-    formData,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }
+    payload
   );
 
   return response.data;
