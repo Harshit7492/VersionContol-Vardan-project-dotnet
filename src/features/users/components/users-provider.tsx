@@ -6,7 +6,7 @@ type UsersDialogType = 'invite' | 'add' | 'edit' | 'delete'
 type UsersContextType = {
   open: UsersDialogType | null
   setOpen: (str: UsersDialogType | null) => void
-  currentRow: any | null
+  currentRow: any
   setCurrentRow: React.Dispatch<React.SetStateAction<any | null>>
   refreshKey: number
   setRefreshKey: React.Dispatch<React.SetStateAction<number>>
