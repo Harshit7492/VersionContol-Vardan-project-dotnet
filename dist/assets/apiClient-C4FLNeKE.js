@@ -1,0 +1,1 @@
+import{at as e}from"./index-CkYrnc-e.js";var t=e.create({baseURL:`http://103.67.16.135:5000`,withCredentials:!0,headers:{"Content-Type":`application/json`}});export{t};

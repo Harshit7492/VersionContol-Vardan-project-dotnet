@@ -103,7 +103,7 @@ export default function UserDashboardPage() {
     try {
       setDownloadingFiles((prev) => new Set(prev).add(file.FileId))
 
-      let blob: Blob
+      // let blob: Blob
 
       if (file.FilePath) {
         // Primary: use FilePath key to download via server-side path
