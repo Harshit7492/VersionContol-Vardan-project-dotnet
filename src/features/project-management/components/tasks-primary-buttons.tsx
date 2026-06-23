@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate } from 'react-router-dom'
 
 export function TasksPrimaryButtons() {
   const navigate = useNavigate()
@@ -9,11 +9,7 @@ export function TasksPrimaryButtons() {
     <div className='flex gap-2'>
       <Button
         className='space-x-1'
-        onClick={() =>
-          navigate({
-            to: '/tasks/create',
-          })
-        }
+          onClick={() => navigate('/tasks/create')}
       >
         <span>Create Project</span>
         <Plus size={18} />

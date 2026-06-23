@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate } from 'react-router-dom'
 import {
   Download,
   Plus,
@@ -107,7 +107,7 @@ export function ProjectsList() {
     if (!projectId) {
       return
     }
-    navigate({ to: `/tasks/edit/${projectId}/` })
+    navigate(`/tasks/edit/${projectId}/`)
   }
 
   const handleUploadFile = async (

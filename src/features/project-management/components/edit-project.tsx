@@ -31,7 +31,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useParams } from 'react-router-dom'
 import { projectService } from '@/lib/api/projectService'
 import { fileStorageService } from '@/lib/api/fileStorageService'
 
@@ -57,9 +57,7 @@ type ProjectForm = {
   versions: VersionItem[]
 }
 
-type EditProjectPageProps = {
-  projectId: string
-}
+
 
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 Bytes'
@@ -72,7 +70,8 @@ function formatFileSize(bytes: number): string {
 // Note: project payload builder removed — we use multipart FormData for updates
 
 // Build FormData for updating project (supports file uploads)
-export function EditProjectPage({ projectId }: EditProjectPageProps) {
+export function EditProjectPage() {
+  const { projectId } = useParams<{ projectId: string }>()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showEditPage, setShowEditPage] = useState(true)
   const [isLoadingProject, setIsLoadingProject] = useState(false)
@@ -273,7 +272,7 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
           }))
         }
 
-        const response = await projectService.UpdateProject(projectId, payload)
+        const response = await projectService.UpdateProject(projectId!, payload)
         const isSuccess = response?.Issuccess ?? response?.Success ?? false
         if (!isSuccess) {
           throw new Error(response?.message || response?.Message || 'Failed to update project')
@@ -364,7 +363,7 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
           <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">Project Updated!</h2>
           <p className="text-muted-foreground mb-4">Redirecting back to projects...</p>
-          <Button onClick={() => navigate({ to: '/tasks' })} variant="outline">
+          <Button onClick={() => navigate('/tasks')} variant="outline">
             Go to Projects
           </Button>
         </div>
@@ -386,11 +385,7 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
             </button>
             <ChevronRight className="h-4 w-4" />
             <button
-              onClick={() =>
-                navigate({
-                  to: '/tasks',
-                })
-              }
+              onClick={() => navigate('/tasks')}
               className="hover:text-foreground transition-colors"
             >
               Projects
@@ -408,7 +403,7 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
               variant="ghost"
               size="sm"
               className="gap-2 hover:bg-muted"
-              onClick={() => navigate({ to: '/tasks' })}
+              onClick={() => navigate('/tasks')}
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Projects
@@ -663,7 +658,7 @@ export function EditProjectPage({ projectId }: EditProjectPageProps) {
             </Card>
 
             <div className="flex items-center justify-between pt-6 border-t sticky bottom-0 bg-background py-4">
-              <Button type="button" variant="outline" onClick={() => navigate({ to: '/tasks' })}>
+              <Button type="button" variant="outline" onClick={() => navigate('/tasks')}>
                 <X className="h-4 w-4 mr-2" />
                 Cancel
               </Button>

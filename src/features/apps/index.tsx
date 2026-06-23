@@ -1,5 +1,5 @@
 import { type ChangeEvent, useState } from 'react'
-import { getRouteApi } from '@tanstack/react-router'
+import { useSearchParams } from 'react-router-dom'
 import { SlidersHorizontal, ArrowUpAZ, ArrowDownAZ } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,7 +19,6 @@ import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { apps } from './data/apps'
 
-const route = getRouteApi('/_authenticated/apps/')
 
 type AppType = 'all' | 'connected' | 'notConnected'
 
@@ -30,12 +29,11 @@ const appText = new Map<AppType, string>([
 ])
 
 export function Apps() {
-  const {
-    filter = '',
-    type = 'all',
-    sort: initSort = 'asc',
-  } = route.useSearch()
-  const navigate = route.useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const filter = searchParams.get('filter') ?? ''
+  const type = (searchParams.get('type') as AppType) ?? 'all'
+  const initSort = searchParams.get('sort') ?? 'asc'
 
   const [sort, setSort] = useState(initSort)
   const [appType, setAppType] = useState(type)
@@ -58,27 +56,34 @@ export function Apps() {
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        filter: e.target.value || undefined,
-      }),
+    setSearchParams((prev) => {
+      if (e.target.value) {
+        prev.set('filter', e.target.value)
+      } else {
+        prev.delete('filter')
+      }
+      return prev
     })
   }
 
   const handleTypeChange = (value: AppType) => {
     setAppType(value)
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        type: value === 'all' ? undefined : value,
-      }),
+    setSearchParams((prev) => {
+      if (value === 'all') {
+        prev.delete('type')
+      } else {
+        prev.set('type', value)
+      }
+      return prev
     })
   }
 
   const handleSortChange = (sort: 'asc' | 'desc') => {
     setSort(sort)
-    navigate({ search: (prev) => ({ ...prev, sort }) })
+    setSearchParams((prev) => {
+      prev.set('sort', sort)
+      return prev
+    })
   }
 
   return (

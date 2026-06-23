@@ -32,7 +32,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate } from 'react-router-dom'
 import { projectService } from '@/lib/api/projectService'
 import { fileStorageService } from '@/lib/api/fileStorageService'
 
@@ -288,7 +288,7 @@ export function CreateProjectPage() {
           <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">Project Created!</h2>
           <p className="text-muted-foreground mb-4">Redirecting back to projects...</p>
-          <Button onClick={() => navigate({ to: '/tasks' })} variant="outline">
+          <Button onClick={() => navigate('/tasks')} variant="outline">
             Go to Projects
           </Button>
         </div>
@@ -311,11 +311,7 @@ export function CreateProjectPage() {
             </button>
             <ChevronRight className="h-4 w-4" />
             <button 
-             onClick={() =>
-          navigate({
-            to: '/tasks',
-          })
-        }
+              onClick={() => navigate('/tasks')}
               className="hover:text-foreground transition-colors"
             >
               Projects
@@ -336,7 +332,7 @@ export function CreateProjectPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate({ to: '/tasks' })}
+              onClick={() => navigate('/tasks')}
               className="gap-2 hover:bg-muted"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -633,7 +629,7 @@ export function CreateProjectPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate({ to: '/tasks' })}
+                onClick={() => navigate('/tasks')}
               >
                 <X className="h-4 w-4 mr-2" />
                 Cancel

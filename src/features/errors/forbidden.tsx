@@ -1,9 +1,16 @@
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { useAuthStore } from '@/stores/auth-store'
 
 export function ForbiddenError() {
   const navigate = useNavigate()
-  const { history } = useRouter()
+  const { auth } = useAuthStore()
+
+  const handleSignIn = () => {
+    auth.reset()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <div className='h-svh'>
       <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2'>
@@ -14,10 +21,10 @@ export function ForbiddenError() {
           to view this resource.
         </p>
         <div className='mt-6 flex gap-4'>
-          <Button variant='outline' onClick={() => history.go(-1)}>
+          <Button variant='outline' onClick={() => navigate(-1)}>
             Go Back
           </Button>
-          <Button onClick={() => navigate({ to: '/' })}>Back to Home</Button>
+          <Button onClick={handleSignIn}>Go to Sign In</Button>
         </div>
       </div>
     </div>

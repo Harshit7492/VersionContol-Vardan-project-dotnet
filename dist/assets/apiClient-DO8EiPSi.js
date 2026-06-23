@@ -1,1 +1,0 @@
-import{at as e}from"./index-Bv1ixMFy.js";var t=e.create({baseURL:`https://localhost:5000/`,withCredentials:!0,headers:{"Content-Type":`application/json`}});export{t};

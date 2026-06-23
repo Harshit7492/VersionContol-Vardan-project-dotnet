@@ -73,6 +73,22 @@ export const sidebarData: SidebarData = {
             // },
           ],
         },
+        {
+          title: 'Activity Management',
+          icon: Settings,
+          items: [
+            {
+              title: 'All Activity',
+              url: '/activity',
+              icon: Users,
+            },
+            {
+              title: 'Activity Details',
+              url: '/activity/activity-details',
+              icon: UserCog,
+            },
+          ],
+        },
       ],
     },
     {

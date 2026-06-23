@@ -1,52 +1,107 @@
+
+
+// import { create } from 'zustand'
+// import { getCookie, setCookie, removeCookie } from '@/lib/cookies'
+
+// const USER_COOKIE = 'app_user'
+
+// export interface AuthUser {
+//   userId: number
+//   firstName: string
+//   lastName: string
+//   email: string
+//   roleId: number
+// }
+
+// interface AuthState {
+//   auth: {
+//     user: AuthUser | null
+//     setUser: (user: AuthUser | null) => void
+//     reset: () => void
+//   }
+// }
+
+// export const useAuthStore = create<AuthState>()((set) => {
+//   // Rehydrate from cookie on page refresh
+//   const cookieState = getCookie(USER_COOKIE)
+//   const initUser: AuthUser | null = cookieState ? JSON.parse(cookieState) : null
+
+//   return {
+//     auth: {
+//       user: initUser,
+//       setUser: (user) =>
+//         set((state) => {
+//           if (user) {
+//             setCookie(USER_COOKIE, JSON.stringify(user))
+//           } else {
+//             removeCookie(USER_COOKIE)
+//           }
+//           return { ...state, auth: { ...state.auth, user } }
+//         }),
+//       reset: () =>
+//         set((state) => {
+//           removeCookie(USER_COOKIE)
+//           return { ...state, auth: { ...state.auth, user: null } }
+//         }),
+//     },
+//   }
+// })
+
+
 import { create } from 'zustand'
-import { getCookie, setCookie, removeCookie } from '@/lib/cookies'
 
-const ACCESS_TOKEN = 'thisisjustarandomstring'
+const SESSION_KEY = 'app_user'
 
-interface AuthUser {
-  accountNo: string
+export interface AuthUser {
+  userId: number
+  firstName: string
+  lastName: string
   email: string
-  role: string[]
-  exp: number
+  roleId: number
 }
 
 interface AuthState {
   auth: {
     user: AuthUser | null
+    isHydrated: boolean
     setUser: (user: AuthUser | null) => void
-    accessToken: string
-    setAccessToken: (accessToken: string) => void
-    resetAccessToken: () => void
+    setHydrated: (val: boolean) => void
     reset: () => void
   }
 }
 
+function loadUserFromSession(): AuthUser | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
 export const useAuthStore = create<AuthState>()((set) => {
-  const cookieState = getCookie(ACCESS_TOKEN)
-  const initToken = cookieState ? JSON.parse(cookieState) : ''
+  // Rehydrate from sessionStorage on page refresh
+  const savedUser = loadUserFromSession()
+
   return {
     auth: {
-      user: null,
+      user: savedUser,
+      isHydrated: true,        // ← already hydrated from sessionStorage, no API needed
       setUser: (user) =>
-        set((state) => ({ ...state, auth: { ...state.auth, user } })),
-      accessToken: initToken,
-      setAccessToken: (accessToken) =>
         set((state) => {
-          setCookie(ACCESS_TOKEN, JSON.stringify(accessToken))
-          return { ...state, auth: { ...state.auth, accessToken } }
+          if (user) {
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify(user))
+          } else {
+            sessionStorage.removeItem(SESSION_KEY)
+          }
+          return { ...state, auth: { ...state.auth, user } }
         }),
-      resetAccessToken: () =>
-        set((state) => {
-          removeCookie(ACCESS_TOKEN)
-          return { ...state, auth: { ...state.auth, accessToken: '' } }
-        }),
+      setHydrated: (val) =>
+        set((state) => ({ ...state, auth: { ...state.auth, isHydrated: val } })),
       reset: () =>
         set((state) => {
-          removeCookie(ACCESS_TOKEN)
-          return {
-            ...state,
-            auth: { ...state.auth, user: null, accessToken: '' },
-          }
+          sessionStorage.removeItem(SESSION_KEY)
+          return { ...state, auth: { ...state.auth, user: null, isHydrated: true } }
         }),
     },
   }

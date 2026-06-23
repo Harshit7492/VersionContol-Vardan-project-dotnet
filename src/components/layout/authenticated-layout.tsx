@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from '@tanstack/react-router'
+import { Outlet, useLocation } from 'react-router-dom'
 import { getCookie } from '@/lib/cookies'
 import { cn } from '@/lib/utils'
 import { LayoutProvider } from '@/context/layout-provider'
@@ -13,7 +13,7 @@ type AuthenticatedLayoutProps = {
 }
 
 export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
-  const location = useLocation({ select: (location) => location.pathname })
+  const { pathname: location } = useLocation()
   const defaultOpen = getCookie('sidebar_state') !== 'false'
   const hideSidebar = location === '/user-side' || location === '/user-side/'
 

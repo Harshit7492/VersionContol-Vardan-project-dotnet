@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from '@tanstack/react-router'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth-store'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { userService } from '@/lib/api/userService'
@@ -8,34 +8,43 @@ interface SignOutDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-export function SignOutDialog({ open, onOpenChange }: SignOutDialogProps) {
+export function SignOutDialog({
+  open,
+  onOpenChange,
+}: SignOutDialogProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { auth } = useAuthStore()
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    try {
+      await userService.logout()
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
+
+    // Preserve current route for redirect after login
+    const currentPath = `${location.pathname}${location.search}`
+
     auth.reset()
-    // Preserve current location for redirect after sign-in
-    userService.logout();
-    const currentPath = location.href
-    navigate({
-      to: '/sign-in',
-      search: { redirect: currentPath },
-      replace: true,
-    })
-    localStorage.clear();
+    localStorage.clear()
+
+    navigate(
+      `/sign-in?redirect=${encodeURIComponent(currentPath)}`,
+      { replace: true }
+    )
   }
 
   return (
     <ConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
-      title='Sign out'
-      desc='Are you sure you want to sign out? You will need to sign in again to access your account.'
-      confirmText='Sign out'
+      title="Sign out"
+      desc="Are you sure you want to sign out? You will need to sign in again to access your account."
+      confirmText="Sign out"
       destructive
       handleConfirm={handleSignOut}
-      className='sm:max-w-sm'
+      className="sm:max-w-sm"
     />
   )
 }
