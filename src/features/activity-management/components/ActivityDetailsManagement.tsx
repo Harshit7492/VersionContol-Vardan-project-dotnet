@@ -1,8 +1,7 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Edit,
-  Trash2,
   MapPin,
   Clock,
   User,
@@ -16,7 +15,6 @@ import ActivityDetailsFilter, { Filters } from './ActivityDetailsFilter';
 import { userService } from '@/lib/api/userService';
 
 // Types and Interfaces
-
 interface ActivityEntry {
   ActivityDetailId: number;
   ActivityId: number;
@@ -28,6 +26,9 @@ interface ActivityEntry {
   IsActive: boolean;
   CreatedAt: string;
   UpdatedAt: string | null;
+  FirstName?: string;
+  LastName?: string;
+  LoginTime?: string;
 }
 
 interface ActivityType {
@@ -51,6 +52,102 @@ interface User {
   CreatedByUserId: number;
   Password?: string;
 }
+
+// ============================================
+// Address Component with Reverse Geocoding
+// ============================================
+
+// Cache for addresses to avoid repeated API calls
+const addressCache = new Map<string, string>();
+
+// Function to get address from coordinates using Nominatim (OpenStreetMap)
+const getAddressFromCoordinates = async (lat: number, lng: number): Promise<string> => {
+  const cacheKey = `${lat},${lng}`;
+  
+  // Check cache first
+  if (addressCache.has(cacheKey)) {
+    return addressCache.get(cacheKey)!;
+  }
+
+  try {
+    // Using OpenStreetMap Nominatim API (free, no API key required)
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+      {
+        headers: {
+          'User-Agent': 'ActivityManagementApp/1.0'
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch address');
+    }
+    
+    const data = await response.json();
+    
+    let address = '';
+    if (data && data.display_name) {
+      const addressParts = data.display_name.split(',');
+      address = addressParts.slice(0, 4).join(',').trim();
+    } else {
+      address = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+    
+    addressCache.set(cacheKey, address);
+    return address;
+  } catch (error) {
+    console.error('Error fetching address:', error);
+    const fallback = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    addressCache.set(cacheKey, fallback);
+    return fallback;
+  }
+};
+
+// Component to display address with loading state
+const AddressDisplay: React.FC<{ lat: number; lng: number }> = ({ lat, lng }) => {
+  const [address, setAddress] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (lat === 0 && lng === 0) {
+      setAddress('No location data');
+      setLoading(false);
+      return;
+    }
+
+    const fetchAddress = async () => {
+      setLoading(true);
+      const result = await getAddressFromCoordinates(lat, lng);
+      setAddress(result);
+      setLoading(false);
+    };
+
+    fetchAddress();
+  }, [lat, lng]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 text-xs text-gray-500">
+        <MapPin size={12} className="animate-pulse" />
+        <span>Loading address...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 text-xs text-gray-600">
+      <MapPin size={12} className="flex-shrink-0 text-blue-500" />
+      <span className="truncate" title={address}>
+        {address}
+      </span>
+    </div>
+  );
+};
+
+// ============================================
+// Main Component
+// ============================================
 
 const ActivityDetailsManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -103,13 +200,14 @@ const ActivityDetailsManagement: React.FC = () => {
       const response = await activityService.getAllActivities({
         pageNumber: 1,
         pageSize: 100,
+        UsageType: "Admin"
       });
       
-      const data =  response.Data;
+      const data = response.Data;
       const isSuccess = response.Success;
       
       if (isSuccess && data) {
-        const activities =  data.Activities || [];
+        const activities = data.Activities || [];
         
         const mappedActivities = activities.map((item: any) => ({
           ActivityId: item.activityId || item.ActivityId,
@@ -125,7 +223,7 @@ const ActivityDetailsManagement: React.FC = () => {
         setActivityTypes(mappedActivities);
         console.log('Fetched activity types:', mappedActivities);
       } else {
-        console.warn('Failed to fetch activities:',  response.Message);
+        console.warn('Failed to fetch activities:', response.Message);
       }
     } catch (error: any) {
       console.error('Error fetching activity types:', error);
@@ -135,19 +233,18 @@ const ActivityDetailsManagement: React.FC = () => {
     }
   }, []);
 
-  // Fetch activity entries with filters - FIXED
+  // Fetch activity entries with filters
   const fetchActivityEntries = useCallback(async () => {
     setLoading(true);
     setError(null);
     
     try {
-      // Build filter params with proper casing
       const params: any = {
         PageNumber: pageNumber,
         PageSize: pageSize,
+        UsageType: "Admin"
       };
 
-      // Add filters if they have values
       if (filters.activityId && filters.activityId !== '') {
         params.ActivityId = parseInt(filters.activityId);
       }
@@ -164,11 +261,11 @@ const ActivityDetailsManagement: React.FC = () => {
         params.ToDate = new Date(filters.toDate).toISOString();
       }
 
-      console.log('Fetching with params:', params); // Debug log
+      console.log('Fetching with params:', params);
 
       const response = await activityService.getAllActivityEntries(params);
 
-      console.log('API Response:', response); // Debug log
+      console.log('API Response:', response);
 
       if (response.Success) {
         setActivityDetails(response.Data.Activities || []);
@@ -194,7 +291,7 @@ const ActivityDetailsManagement: React.FC = () => {
     fetchUsers();
     fetchActivityTypes();
     fetchActivityEntries();
-  }, []); // Run only once on mount
+  }, []);
 
   // Handle filter change
   const handleFilterChange = (key: string, value: string) => {
@@ -212,81 +309,13 @@ const ActivityDetailsManagement: React.FC = () => {
       toDate: '',
     });
     setPageNumber(1);
-    // Auto-apply after clearing filters
     setTimeout(() => fetchActivityEntries(), 0);
   };
 
-  // Apply filters (refresh data)
+  // Apply filters
   const applyFilters = () => {
     setPageNumber(1);
-    // Fetch with current filters
     fetchActivityEntries();
-  };
-
-  // Handle delete (soft delete)
-  const handleDelete = async (detailId: number, subject: string) => {
-    if (!window.confirm(`Are you sure you want to delete activity "${subject}"?`)) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const detail = activityDetails.find(d => d.ActivityDetailId === detailId);
-      if (!detail) {
-        toast.error('Activity not found');
-        return;
-      }
-
-      const response = await activityService.updateActivityEntry({
-        ActivityDetailId: detailId,
-        ActivityId: detail.ActivityId,
-        ActivitySubject: detail.ActivitySubject,
-        ActivityDiscription: detail.ActivityDiscription || '',
-        CurrentLocation: detail.CurrentLocation || '',
-        Latitude: detail.Latitude,
-        Longitude: detail.Longitude,
-      });
-
-      if (response.Success) {
-        toast.success('Activity deleted successfully');
-        fetchActivityEntries();
-      } else {
-        toast.error(response.Message || 'Failed to delete activity');
-      }
-    } catch (error: any) {
-      toast.error(error?.message || 'Error deleting activity');
-      console.error('Error deleting activity:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle toggle status
-  const handleToggleStatus = async (detail: ActivityEntry) => {
-    setLoading(true);
-    try {
-      const response = await activityService.updateActivityEntry({
-        ActivityDetailId: detail.ActivityDetailId,
-        ActivityId: detail.ActivityId,
-        ActivitySubject: detail.ActivitySubject,
-        ActivityDiscription: detail.ActivityDiscription || '',
-        CurrentLocation: detail.CurrentLocation || '',
-        Latitude: detail.Latitude,
-        Longitude: detail.Longitude,
-      });
-
-      if (response.Success) {
-        toast.success(`Activity ${detail.IsActive ? 'deactivated' : 'activated'} successfully`);
-        fetchActivityEntries();
-      } else {
-        toast.error('Failed to update status');
-      }
-    } catch (error: any) {
-      toast.error(error?.message || 'Error updating status');
-      console.error('Error updating status:', error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   // Helper functions
@@ -308,6 +337,15 @@ const ActivityDetailsManagement: React.FC = () => {
     } catch {
       return dateString;
     }
+  };
+
+ 
+
+  const getUserFullName = (detail: ActivityEntry): string => {
+    if (detail.FirstName && detail.LastName) {
+      return `${detail.FirstName} ${detail.LastName}`;
+    }
+    return `User ${detail.ActivityId}`;
   };
 
   const hasActiveFilters = Object.values(filters).some(v => v !== '');
@@ -406,9 +444,12 @@ const ActivityDetailsManagement: React.FC = () => {
                       </span>
                     </div>
                     
+                    {/* User Full Name - Updated to show FirstName and LastName */}
                     <div className='mb-1 flex items-center gap-2 text-sm text-gray-600'>
-                      <User size={14} className='flex-shrink-0' />
-                      <span className='truncate'>User ID: {detail.ActivityId}</span>
+                      <User size={14} className='flex-shrink-0 text-blue-500' />
+                      <span className='truncate font-medium text-gray-700'>
+                        {getUserFullName(detail)}
+                      </span>
                     </div>
                     
                     <div className='mb-1 flex items-center gap-2 text-sm text-gray-600'>
@@ -416,6 +457,7 @@ const ActivityDetailsManagement: React.FC = () => {
                       <span className='truncate'>{detail.ActivitySubject}</span>
                     </div>
                     
+                    {/* Show CurrentLocation if available */}
                     {detail.CurrentLocation && (
                       <div className='mb-1 flex items-center gap-2 text-sm text-gray-600'>
                         <MapPin size={14} className='flex-shrink-0' />
@@ -423,15 +465,16 @@ const ActivityDetailsManagement: React.FC = () => {
                       </div>
                     )}
                     
+                    {/* Show address from coordinates if available */}
                     {(detail.Latitude !== 0 || detail.Longitude !== 0) && (
-                      <div className='text-xs text-gray-500'>
-                        📍 {detail.Latitude.toFixed(4)}, {detail.Longitude.toFixed(4)}
+                      <div className='mt-1'>
+                        <AddressDisplay lat={detail.Latitude} lng={detail.Longitude} />
                       </div>
                     )}
                     
                     <div className='mt-2 flex items-center gap-2 text-sm text-gray-600'>
                       <Clock size={14} className='flex-shrink-0' />
-                      <span>{formatDate(detail.CreatedAt)}</span>
+                      <span>Created: {formatDate(detail.CreatedAt)}</span>
                     </div>
                     
                     {detail.ActivityDiscription && (
@@ -439,51 +482,6 @@ const ActivityDetailsManagement: React.FC = () => {
                         {detail.ActivityDiscription}
                       </p>
                     )}
-                  </div>
-                  
-                  <div className='ml-2 flex flex-col gap-2 flex-shrink-0'>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/activity/edit-activity/${detail.ActivityDetailId}`);
-                      }}
-                      className='rounded-lg p-1.5 text-blue-600 transition-colors hover:bg-blue-50'
-                      title='Edit'
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleStatus(detail);
-                      }}
-                      className={`rounded-lg p-1.5 transition-colors ${
-                        detail.IsActive
-                          ? 'text-yellow-600 hover:bg-yellow-50'
-                          : 'text-green-600 hover:bg-green-50'
-                      }`}
-                      title={detail.IsActive ? 'Deactivate' : 'Activate'}
-                    >
-                      {detail.IsActive ? (
-                        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636' />
-                        </svg>
-                      ) : (
-                        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
-                        </svg>
-                      )}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(detail.ActivityDetailId, detail.ActivitySubject);
-                      }}
-                      className='rounded-lg p-1.5 text-red-600 transition-colors hover:bg-red-50'
-                      title='Delete'
-                    >
-                      <Trash2 size={16} />
-                    </button>
                   </div>
                 </div>
               </div>

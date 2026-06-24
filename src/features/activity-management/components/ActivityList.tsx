@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Trash2, RefreshCw, Search, Eye, Plus } from 'lucide-react';
+import { Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import activityService, { Activity } from '@/lib/api/activityService';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -26,14 +25,11 @@ import {
 
 interface ActivityListProps {
   onEdit: (activity: Activity) => void;
-  onAdd: () => void;
 }
 
-const ActivityList: React.FC<ActivityListProps> = ({ onEdit, onAdd }) => {
+const ActivityList: React.FC<ActivityListProps> = ({ onEdit }) => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showInactive, setShowInactive] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
@@ -68,10 +64,6 @@ const ActivityList: React.FC<ActivityListProps> = ({ onEdit, onAdd }) => {
           updatedDateTime: item.updatedAt || item.UpdatedAt || item.UpdatedDateTime,
         }));
 
-        if (!showInactive) {
-          items = items.filter((item: any) => item.isActive);
-        }
-
         setActivities(items);
         setTotalCount(data.totalCount || data.TotalRecords || 0);
         setTotalPages(data.totalPages || data.TotalPages || 0);
@@ -88,7 +80,7 @@ const ActivityList: React.FC<ActivityListProps> = ({ onEdit, onAdd }) => {
 
   useEffect(() => {
     fetchActivities();
-  }, [pageNumber, showInactive]);
+  }, [pageNumber]);
 
   // Handle delete
   const handleDelete = async () => {
@@ -122,43 +114,11 @@ const ActivityList: React.FC<ActivityListProps> = ({ onEdit, onAdd }) => {
     }
   };
 
-  // Handle toggle status
-  const handleToggleStatus = async (activity: Activity) => {
-    setLoading(true);
-    try {
-      const response = await activityService.updateActivity({
-        activityId: activity.activityId,
-        isActive: !activity.isActive,
-        updatedByUserId: userId,
-      });
 
-      const res: any = response;
-      const isSuccess = res.success !== undefined ? res.success : res.Success;
-      const message = res.message || res.Message;
-
-      if (isSuccess) {
-        toast.success(`Activity ${activity.isActive ? 'deactivated' : 'activated'} successfully`);
-        fetchActivities();
-      } else {
-        toast.error(message || 'Failed to update status');
-      }
-    } catch (error: any) {
-      toast.error(error?.message || 'Error updating status');
-      console.error('Error updating status:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle view details
-  const handleViewDetails = (id: number) => {
-    window.location.href = `/activity/view-activity-details/${id}`;
-  };
 
   // Filter activities based on search
   const filteredActivities = activities.filter((activity) =>
-    activity.activityName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (activity.activityDescription?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    activity.activityName.toLowerCase()
   );
 
   // Get status badge
@@ -174,33 +134,9 @@ const ActivityList: React.FC<ActivityListProps> = ({ onEdit, onAdd }) => {
     <div className="space-y-4">
       {/* Search and Filters */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        {/* <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-          <Input
-            type="text"
-            placeholder="Search activities..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div> */}
+        
         <div className="flex items-center gap-2 flex-wrap">
-          {/* <Button
-            variant={showInactive ? 'default' : 'outline'}
-            onClick={() => setShowInactive(!showInactive)}
-            size="sm"
-          >
-            {showInactive ? 'Hide Inactive' : 'Show Inactive'}
-          </Button> */}
-          {/* <Button
-            variant="outline"
-            onClick={fetchActivities}
-            disabled={loading}
-            size="sm"
-          >
-            <RefreshCw size={16} className={loading ? 'animate-spin mr-2' : 'mr-2'} />
-            Refresh
-          </Button> */}
+          
          
         </div>
       </div>

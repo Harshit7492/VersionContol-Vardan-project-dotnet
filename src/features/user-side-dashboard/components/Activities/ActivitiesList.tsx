@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Edit, Trash2, RefreshCw, Search, Eye, Download, Filter, Activity, Plus, Calendar, X } from 'lucide-react';
+import { Edit, Eye, Activity} from 'lucide-react';
 import { toast } from 'sonner';
 import activityService from '@/lib/api/activityService';
 
@@ -23,18 +22,14 @@ interface ActivityEntry {
   UpdatedAt: string | null;
 }
 
-const ActivityList: React.FC<ActivityListProps> = ({ onEdit, onAdd, onView }) => {
-  const navigate = useNavigate();
+const ActivityList: React.FC<ActivityListProps> = ({ onEdit, onView }) => {
   const [activities, setActivities] = useState<ActivityEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showInactive, setShowInactive] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [sortBy, setSortBy] = useState<'subject' | 'id' | 'status' | 'date'>('id');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   // Filter states
   const [filters, setFilters] = useState({
@@ -45,7 +40,6 @@ const ActivityList: React.FC<ActivityListProps> = ({ onEdit, onAdd, onView }) =>
     fromDate: '',
     toDate: '',
   });
-  const [showFilters, setShowFilters] = useState(false);
 
   // Fetch activities with filters
   const fetchActivities = async () => {
@@ -55,6 +49,7 @@ const ActivityList: React.FC<ActivityListProps> = ({ onEdit, onAdd, onView }) =>
       const params: any = {
         pageNumber,
         pageSize,
+        UsageType : "User"
       };
 
       // Add filters if they have values
@@ -71,18 +66,16 @@ const ActivityList: React.FC<ActivityListProps> = ({ onEdit, onAdd, onView }) =>
         let items = response.Data.Activities || [];
         
         // Filter by search term (client-side search)
-        if (searchTerm) {
-          items = items.filter((item: ActivityEntry) =>
-            item.ActivitySubject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.ActivityDiscription.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.CurrentLocation.toLowerCase().includes(searchTerm.toLowerCase())
-          );
-        }
+        // if (searchTerm) {
+        //   items = items.filter((item: ActivityEntry) =>
+        //     item.ActivitySubject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        //     item.ActivityDiscription.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        //     item.CurrentLocation.toLowerCase().includes(searchTerm.toLowerCase())
+        //   );
+        // }
         
         // Filter inactive items
-        if (!showInactive) {
-          items = items.filter((item: ActivityEntry) => item.IsActive);
-        }
+       
         
         setActivities(items);
         setTotalCount(response.Data.TotalRecords || 0);
@@ -100,13 +93,9 @@ const ActivityList: React.FC<ActivityListProps> = ({ onEdit, onAdd, onView }) =>
 
   useEffect(() => {
     fetchActivities();
-  }, [pageNumber, showInactive, filters]);
+  }, [pageNumber, filters]);
 
   // Handle filter change
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters({ ...filters, [key]: value });
-    setPageNumber(1); // Reset to first page when filters change
-  };
 
   // Clear all filters
   const clearFilters = () => {
@@ -121,93 +110,7 @@ const ActivityList: React.FC<ActivityListProps> = ({ onEdit, onAdd, onView }) =>
     setPageNumber(1);
   };
 
-  // Handle delete
-  const handleDelete = async (id: number, name: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${name}"?`)) return;
-
-    setLoading(true);
-    try {
-      // Using update activity to deactivate
-      const response = await activityService.updateActivity({
-        activityId: id,
-        isActive: false,
-        updatedByUserId: 1, // Get from auth context
-      });
-
-      if (response.Success) {
-        toast.success('Activity deleted successfully');
-        fetchActivities();
-      } else {
-        toast.error(response.Message || 'Failed to delete activity');
-      }
-    } catch (error: any) {
-      toast.error(error?.message || 'Error deleting activity');
-      console.error('Error deleting activity:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle toggle status
-  const handleToggleStatus = async (activity: ActivityEntry) => {
-    setLoading(true);
-    try {
-      const response = await activityService.updateActivity({
-        activityId: activity.ActivityId,
-        isActive: !activity.IsActive,
-        updatedByUserId: 1, // Get from auth context
-      });
-
-      if (response.Success) {
-        toast.success(`Activity ${activity.IsActive ? 'deactivated' : 'activated'} successfully`);
-        fetchActivities();
-      } else {
-        toast.error(response.Message || 'Failed to update status');
-      }
-    } catch (error: any) {
-      toast.error(error?.message || 'Error updating status');
-      console.error('Error updating status:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle export
-  const handleExport = () => {
-    if (activities.length === 0) {
-      toast.warning('No activities to export');
-      return;
-    }
-
-    const csvData = activities.map(a => ({
-      ID: a.ActivityDetailId,
-      ActivityId: a.ActivityId,
-      Subject: a.ActivitySubject,
-      Description: a.ActivityDiscription || '',
-      Location: a.CurrentLocation,
-      Latitude: a.Latitude,
-      Longitude: a.Longitude,
-      Status: a.IsActive ? 'Active' : 'Inactive',
-      CreatedAt: new Date(a.CreatedAt).toLocaleString(),
-    }));
-    
-    const headers = Object.keys(csvData[0]);
-    const csv = [
-      headers.join(','),
-      ...csvData.map(row => headers.map(h => `"${row[h as keyof typeof row]}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `activities_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-    toast.success('Activities exported successfully');
-  };
+  
 
   // Get status badge
   const getStatusBadge = (isActive: boolean) => {
@@ -229,150 +132,14 @@ const ActivityList: React.FC<ActivityListProps> = ({ onEdit, onAdd, onView }) =>
   };
 
   // Sort activities
-  const sortedActivities = [...activities].sort((a, b) => {
-    let comparison = 0;
-    switch (sortBy) {
-      case 'subject':
-        comparison = a.ActivitySubject.localeCompare(b.ActivitySubject);
-        break;
-      case 'id':
-        comparison = a.ActivityDetailId - b.ActivityDetailId;
-        break;
-      case 'status':
-        comparison = (a.IsActive === b.IsActive) ? 0 : a.IsActive ? -1 : 1;
-        break;
-      case 'date':
-        comparison = new Date(a.CreatedAt).getTime() - new Date(b.CreatedAt).getTime();
-        break;
-      default:
-        comparison = 0;
-    }
-    return sortOrder === 'asc' ? comparison : -comparison;
-  });
+  const sortedActivities = [...activities]
+  
 
   return (
     <div className="space-y-4">
       {/* Search and Filters */}
       <div className=" ">
-        {/* <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="text"
-              placeholder="Search activities by subject, description, or location..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                showFilters
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <Filter size={16} />
-              Filters
-              {Object.values(filters).some(v => v !== '') && (
-                <span className="ml-1 px-2 py-0.5 text-xs bg-blue-200 text-blue-800 rounded-full">
-                  Active
-                </span>
-              )}
-            </button>
-
-            
-            
-            
-            <button
-              onClick={onAdd}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus size={16} />
-              Add New
-            </button>
-          </div>
-        </div> */}
-
-        {/* Advanced Filters */}
-        {showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Activity ID</label>
-                <input
-                  type="number"
-                  value={filters.activityId}
-                  onChange={(e) => handleFilterChange('activityId', e.target.value)}
-                  placeholder="Enter Activity ID"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">User ID</label>
-                <input
-                  type="number"
-                  value={filters.userId}
-                  onChange={(e) => handleFilterChange('userId', e.target.value)}
-                  placeholder="Enter User ID"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-                <input
-                  type="text"
-                  value={filters.activitySubject}
-                  onChange={(e) => handleFilterChange('activitySubject', e.target.value)}
-                  placeholder="Filter by subject"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select
-                  value={filters.isActive}
-                  onChange={(e) => handleFilterChange('isActive', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">All</option>
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
-                <input
-                  type="datetime-local"
-                  value={filters.fromDate}
-                  onChange={(e) => handleFilterChange('fromDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
-                <input
-                  type="datetime-local"
-                  value={filters.toDate}
-                  onChange={(e) => handleFilterChange('toDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="flex items-end">
-                <button
-                  onClick={clearFilters}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  <X size={16} />
-                  Clear Filters
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+    
       </div>
 
       {/* Activities Table */}

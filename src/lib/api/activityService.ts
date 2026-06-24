@@ -1,4 +1,3 @@
-import { promises } from 'node:dns';
 import apiClient from './apiClient';
 
 export interface Activity {
@@ -29,6 +28,7 @@ export interface UpdateActivityRequest {
 export interface GetAllActivitiesParams {
   pageNumber?: number;
   pageSize?: number;
+  UsageType?: string;
 }
 
 export interface BaseResponse<T = any> {

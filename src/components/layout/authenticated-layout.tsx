@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import { getCookie } from '@/lib/cookies'
 import { cn } from '@/lib/utils'
 import { LayoutProvider } from '@/context/layout-provider'
@@ -13,17 +13,15 @@ type AuthenticatedLayoutProps = {
 }
 
 export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
-  const { pathname: location } = useLocation()
   const defaultOpen = getCookie('sidebar_state') !== 'false'
-  const hideSidebar = location === '/user-side' || location === '/user-side/'
 
   return (
     <ProfileProvider>
       <SearchProvider>
         <LayoutProvider>
           <SidebarProvider defaultOpen={defaultOpen}>
-            {!hideSidebar && <SkipToMain />}
-            {!hideSidebar && <AppSidebar />}
+            <SkipToMain />
+            <AppSidebar />
             <SidebarInset
               className={cn(
                 // Set content container, so we can use container queries

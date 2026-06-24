@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Eye, RefreshCw, Search, CheckCircle, XCircle, Calendar, MapPin, Filter, X } from 'lucide-react';
+import { Edit, Eye, CheckCircle, XCircle, Calendar, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import activityService from '@/lib/api/activityService';
 
@@ -25,12 +25,10 @@ const ActivityGrid: React.FC<ActivityGridProps> = ({ onEdit, onView }) => {
   const [activities, setActivities] = useState<ActivityEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showInactive, setShowInactive] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize] = useState(12);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [showFilters, setShowFilters] = useState(false);
   
   // Filter states
   const [filters, setFilters] = useState({
@@ -74,9 +72,7 @@ const ActivityGrid: React.FC<ActivityGridProps> = ({ onEdit, onView }) => {
         }
         
         // Filter inactive items
-        if (!showInactive) {
-          items = items.filter((item: ActivityEntry) => item.IsActive);
-        }
+        
         
         setActivities(items);
         setTotalCount(response.Data.TotalRecords || 0);
@@ -94,13 +90,9 @@ const ActivityGrid: React.FC<ActivityGridProps> = ({ onEdit, onView }) => {
 
   useEffect(() => {
     fetchActivities();
-  }, [pageNumber, showInactive, filters]);
+  }, [pageNumber, filters]);
 
-  // Handle filter change
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters({ ...filters, [key]: value });
-    setPageNumber(1); // Reset to first page when filters change
-  };
+ 
 
   // Clear all filters
   const clearFilters = () => {

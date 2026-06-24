@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, X, ChevronDown, Tag, MapPin, Navigation } from 'lucide-react';
 import { toast } from 'sonner';
-import activityService from '@/lib/api/activityService'; // CORRECT IMPORT
+import activityService from '@/lib/api/activityService';
+import { Header } from '@/components/layout/header';
 
 // Make sure these interfaces match what's in your activityService
 interface ActivityType {
@@ -25,25 +26,6 @@ interface CreateActivityPayload {
   Longitude: number;
 }
 
-interface GetAllActivitiesParams {
-  pageNumber?: number;
-  pageSize?: number;
-}
-
-interface PaginatedResponse<T> {
-  Activities: T[];
-  PageNumber: number;
-  PageSize: number;
-  TotalRecords: number;
-  TotalPages: number;
-}
-
-interface BaseResponse<T> {
-  Success: boolean;
-  Message: string;
-  Error: string | null;
-  Data: T;
-}
 
 const CreateActivity: React.FC = () => {
   const navigate = useNavigate();
@@ -254,22 +236,26 @@ const CreateActivity: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Shared Header */}
+      <Header fixed>
+        <div>
+          <h1 className="text-base font-semibold text-foreground">Create Activity</h1>
+          <p className="text-xs text-muted-foreground hidden sm:block">Add a new activity with type and location</p>
+        </div>
+      </Header>
+
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleCancel}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Create New Activity</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Add a new activity with type classification and location
-              </p>
-            </div>
+        {/* Page Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <button
+            onClick={handleCancel}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Create New Activity</h2>
+            <p className="text-sm text-gray-500 mt-0.5">Add a new activity with type classification and location</p>
           </div>
         </div>
 

@@ -96,23 +96,23 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
           updatedByUserId: 1, // Replace with actual user ID from auth
         });
 
-        if (response.success) {
+        if (response.Success) {
           toast.success('Activity updated successfully');
           onSuccess();
           onClose();
         } else {
-          toast.error(response.message || 'Failed to update activity');
+          toast.error(response.Message || 'Failed to update activity');
         }
       } else {
         // Create activity
         const response = await activityService.addActivity(payload);
 
-        if (response.success) {
+        if (response.Success) {
           toast.success('Activity created successfully');
           onSuccess();
           onClose();
         } else {
-          toast.error(response.message || 'Failed to create activity');
+          toast.error(response.Message || 'Failed to create activity');
         }
       }
     } catch (error: any) {

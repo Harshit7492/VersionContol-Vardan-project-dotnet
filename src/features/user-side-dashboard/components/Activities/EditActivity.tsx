@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, X, ChevronDown, Tag, MapPin, Navigation, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import activityService from '@/lib/api/activityService';
+import { Header } from '@/components/layout/header';
 
 interface ActivityType {
   ActivityId: number;
@@ -38,25 +39,6 @@ interface UpdateActivityPayload {
   Longitude: number;
 }
 
-interface GetAllActivitiesParams {
-  pageNumber?: number;
-  pageSize?: number;
-}
-
-interface PaginatedResponse<T> {
-  Activities: T[];
-  PageNumber: number;
-  PageSize: number;
-  TotalRecords: number;
-  TotalPages: number;
-}
-
-interface BaseResponse<T> {
-  Success: boolean;
-  Message: string;
-  Error: string | null;
-  Data: T;
-}
 
 const EditActivity: React.FC = () => {
   const navigate = useNavigate();
@@ -352,8 +334,16 @@ const EditActivity: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Shared Header */}
+      <Header fixed>
+        <div>
+          <h1 className="text-base font-semibold text-foreground">Edit Activity</h1>
+          <p className="text-xs text-muted-foreground hidden sm:block">Update activity details and location</p>
+        </div>
+      </Header>
+
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
+        {/* Page Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <button
@@ -363,8 +353,8 @@ const EditActivity: React.FC = () => {
               <ArrowLeft size={20} />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Edit Activity</h1>
-              <p className="text-sm text-gray-500 mt-1">
+              <h2 className="text-xl font-bold text-gray-900">Edit Activity</h2>
+              <p className="text-sm text-gray-500 mt-0.5">
                 Update activity details, type, and location
               </p>
             </div>

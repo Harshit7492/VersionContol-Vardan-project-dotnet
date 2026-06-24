@@ -1,5 +1,5 @@
 // features/user-side-dashboard/index.tsx
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import {
   MessageSquare,
   CheckCircle,
@@ -104,10 +104,9 @@ const mockChatSummary = [
 ]
 
 export default function UserDashboard() {
-  const [stats, setStats] = useState(mockStats)
-  const [recentChats, setRecentChats] = useState(mockRecentChats)
-  const [chatSummary, setChatSummary] = useState(mockChatSummary)
-  const [isLoading, setIsLoading] = useState(false)
+  const stats = mockStats
+  const recentChats = mockRecentChats
+  const chatSummary = mockChatSummary
 
   // Fetch data on mount
   useEffect(() => {

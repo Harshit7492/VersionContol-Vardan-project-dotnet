@@ -1,4 +1,3 @@
-import { type LinkProps } from 'react-router-dom'
 
 type User = {
   name: string

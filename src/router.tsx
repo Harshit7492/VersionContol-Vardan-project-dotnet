@@ -57,7 +57,7 @@ export const router = createBrowserRouter([
     element: <SignIn2 />,
   },
 
-  // ── Protected routes ────────────────────────────────────
+  // ── Admin Protected routes ──────────────────────────────
   {
     path: '/',
     element: (
@@ -180,43 +180,45 @@ export const router = createBrowserRouter([
         path: 'apps',
         element: <Apps />,
       },
+    ],
+  },
 
-      // ── User Side ───────────────────────────────────────
-      // RouteGuard on the parent '/' already protects these.
-      // Role-based path filtering (roleId 0/4 → /user-side only)
-      // is enforced by RouteGuard via ROLE_ROUTES config.
+  // ── User Side Protected routes (own layout + own SidebarProvider) ──
+  {
+    path: '/user-side',
+    element: (
+      <RouteGuard>
+        <UserSideLayout />
+      </RouteGuard>
+    ),
+    errorElement: <GeneralError />,
+    children: [
       {
-        path: 'user-side',
-        element: <UserSideLayout />,
+        index: true,
+        element: <UserDashboard />,
+      },
+      {
+        path: 'project',
+        element: <UserSideProjectManagement />,
+      },
+      {
+        path: 'activity',
         children: [
           {
             index: true,
-            element: <UserDashboard />,
+            element: <ActivitiesManagement />,
           },
           {
-            path: 'project',
-            element: <UserSideProjectManagement />,
+            path: 'activity/user/create',
+            element: <CreateActivity />,
           },
           {
-            path: 'activity',
-            children: [
-              {
-                index: true,
-                element: <ActivitiesManagement />,
-              },
-              {
-                path: 'user/create',
-                element: <CreateActivity />,
-              },
-              {
-                path: 'user/edit/:id',
-                element: <EditActivity />,
-              },
-              {
-                path: 'user/view/:id',
-                element: <ViewActivity />,
-              },
-            ],
+            path: 'user/edit/:id',
+            element: <EditActivity />,
+          },
+          {
+            path: 'user/view/:id',
+            element: <ViewActivity />,
           },
         ],
       },
