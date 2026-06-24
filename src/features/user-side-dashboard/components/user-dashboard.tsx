@@ -596,7 +596,7 @@ export default function UserDashboardPage() {
   }
 
   return (
-    <div className='space-y-6 p-4 md:p-6'>
+    <div className='space-y-6 p-4 pt-0 md:p-6'>
       {/* Projects */}
       <div className='space-y-4'>
         {filteredProjects.length === 0 ? (

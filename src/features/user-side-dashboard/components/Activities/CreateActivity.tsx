@@ -4,6 +4,7 @@ import { ArrowLeft, Save, X, ChevronDown, Tag, MapPin, Navigation } from 'lucide
 import { toast } from 'sonner';
 import activityService from '@/lib/api/activityService';
 import { Header } from '@/components/layout/header';
+import { ProfileDropdown } from '@/components/profile-dropdown';
 
 // Make sure these interfaces match what's in your activityService
 interface ActivityType {
@@ -237,10 +238,13 @@ const CreateActivity: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Shared Header */}
-      <Header fixed>
-        <div>
-          <h1 className="text-base font-semibold text-foreground">Create Activity</h1>
-          <p className="text-xs text-muted-foreground hidden sm:block">Add a new activity with type and location</p>
+         <Header fixed>
+        <div className="flex items-center justify-between w-full">
+          <h1 className="text-base font-semibold text-foreground">
+           Create Activity
+          </h1>
+      
+          <ProfileDropdown />
         </div>
       </Header>
 

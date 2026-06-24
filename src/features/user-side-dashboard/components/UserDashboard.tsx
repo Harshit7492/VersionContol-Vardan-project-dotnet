@@ -22,6 +22,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Header } from '@/components/layout/header'
+import { ProfileDropdown } from '@/components/profile-dropdown'
 
 // Mock data - Replace with actual API calls
 const mockStats = {
@@ -141,7 +143,17 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="">
+           <Header fixed>
+  <div className="flex items-center justify-between w-full">
+    <h1 className="text-base font-semibold text-foreground">
+     Dashboard
+    </h1>
+
+    <ProfileDropdown />
+  </div>
+</Header>
+<div className="space-y-4 p-4">
       {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
@@ -347,6 +359,7 @@ export default function UserDashboard() {
             </p>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   )

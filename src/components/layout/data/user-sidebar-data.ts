@@ -1,14 +1,11 @@
 // components/user-sidebar/data/user-sidebar-data.ts
 import {
   LayoutDashboard,
-  HelpCircle,
   Command,
-  Download,
   FolderKanban,
   ClipboardList,
   Plus,
   List,
-  Grid,
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -56,30 +53,30 @@ export const userSidebarData: SidebarData = {
         },
         {
           title: 'Create Activity',
-          url: '/user-side/activity/create',
+          url: '/user-side/activity/user/create',
           icon: Plus,
         },
-        {
-          title: 'Grid View',
-          url: '/user-side/activity?view=grid',
-          icon: Grid,
-        },
+        // {
+        //   title: 'Grid View',
+        //   url: '/user-side/activity?view=grid',
+        //   icon: Grid,
+        // },
       ],
     },
-    {
-      title: 'Other',
-      items: [
-        {
-          title: 'Help & Support',
-          url: '/user-side/help',
-          icon: HelpCircle,
-        },
-        {
-          title: 'Downloads',
-          url: '/user-side/downloads',
-          icon: Download,
-        },
-      ],
-    },
+    // {
+    //   title: 'Other',
+    //   items: [
+    //     {
+    //       title: 'Help & Support',
+    //       url: '/user-side/help',
+    //       icon: HelpCircle,
+    //     },
+    //     {
+    //       title: 'Downloads',
+    //       url: '/user-side/downloads',
+    //       icon: Download,
+    //     },
+    //   ],
+    // },
   ],
 }

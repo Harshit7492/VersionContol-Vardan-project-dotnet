@@ -8,7 +8,6 @@ import UserSideLayout from './components/layout/userside-layout'
 
 // ── Auth ─────────────────────────────────────────────────
 import { SignIn } from '@/features/auth/sign-in'
-import { SignIn2 } from '@/features/auth/sign-in/sign-in-2'
 
 // ── Error Pages ───────────────────────────────────────────
 import { ForbiddenError } from '@/features/errors/forbidden'
@@ -54,7 +53,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/login',
-    element: <SignIn2 />,
+    element: <SignIn />,
   },
 
   // ── Admin Protected routes ──────────────────────────────
@@ -209,7 +208,7 @@ export const router = createBrowserRouter([
             element: <ActivitiesManagement />,
           },
           {
-            path: 'activity/user/create',
+            path: 'user/create',
             element: <CreateActivity />,
           },
           {

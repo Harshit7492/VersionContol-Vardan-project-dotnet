@@ -4,6 +4,7 @@ import { Plus, LayoutGrid, List } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import ActivityList from './ActivitiesList';
 import ActivityGrid from './ActivityGrid';
+import { ProfileDropdown } from '@/components/profile-dropdown';
 
 const ActivitiesManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -28,11 +29,14 @@ const ActivitiesManagement: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Shared Header */}
       <Header fixed>
-        <div>
-          <h1 className="text-base font-semibold text-foreground">Activities</h1>
-          <p className="text-xs text-muted-foreground hidden sm:block">Manage and track your activities</p>
-        </div>
-      </Header>
+  <div className="flex items-center justify-between w-full">
+    <h1 className="text-base font-semibold text-foreground">
+     All Activities
+    </h1>
+
+    <ProfileDropdown />
+  </div>
+</Header>
 
       {/* Content Header Section */}
       <div className="bg-white border-b border-gray-200">
