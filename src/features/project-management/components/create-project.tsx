@@ -399,8 +399,8 @@ export function CreateProjectPage() {
                         <Textarea 
                           {...field} 
                           placeholder="Describe your project and its purpose..."
-                          rows={3}
-                          className="max-w-xl resize-none"
+                          rows={6}
+                          className="max-w-3xl resize-none"
                         />
                       </FormControl>
                       <FormMessage />
@@ -540,18 +540,19 @@ export function CreateProjectPage() {
                                   {files.map((file: any, fileIndex: number) => (
                                     <Card key={fileIndex} className="border hover:border-primary/50 transition-colors">
                                       <CardContent className="p-4">
-                                        <div className="grid gap-4 md:grid-cols-[1fr_250px_auto] items-start">
+                                        <div className="grid gap-4 md:grid-cols-[1fr_2fr_250px_auto] items-start">
                                           <div className="space-y-3">
                                             <FormField
                                               control={form.control}
                                               name={`versions.${versionIndex}.files.${fileIndex}.fileName`}
+                                              rules={{ required: 'File name is required' }}
                                               render={({ field }) => (
                                                 <FormItem>
-                                                  <FormLabel className="text-xs font-medium">File Name</FormLabel>
+                                                  <FormLabel className="text-xs font-medium">File Name *</FormLabel>
                                                   <FormControl>
                                                     <Input 
                                                       {...field} 
-                                                      placeholder="Enter file name or use uploaded filename"
+                                                      placeholder="Enter file name"
                                                       className="h-9"
                                                     />
                                                   </FormControl>
@@ -562,6 +563,27 @@ export function CreateProjectPage() {
                                           </div>
 
                                           <div className="space-y-3">
+                                            <FormField
+                                              control={form.control}
+                                              name={`versions.${versionIndex}.files.${fileIndex}.fileDescription`}
+                                              rules={{ required: 'File description is required' }}
+                                              render={({ field }) => (
+                                                <FormItem>
+                                                  <FormLabel className="text-xs font-medium">File Description *</FormLabel>
+                                                  <FormControl>
+                                                    <Input 
+                                                      {...field} 
+                                                      placeholder="Enter file description"
+                                                      className="h-9"
+                                                    />
+                                                  </FormControl>
+                                                  <FormMessage />
+                                                </FormItem>
+                                              )}
+                                            />
+                                          </div>
+ 
+                                          <div className="space-y-3">
                                             <div>
                                               <FormLabel className="text-xs font-medium">Upload File</FormLabel>
                                               <Input
@@ -569,17 +591,17 @@ export function CreateProjectPage() {
                                                 onChange={(e) => handleFileSelect(versionIndex, fileIndex, e)}
                                                 className="h-9 cursor-pointer"
                                               />
-                                              {file.file && (
+                                              {(file.file || file.filePath || file.fileUrl) && (
                                                 <div className="flex items-center gap-2 mt-2">
                                                   <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                                  <p className="text-xs text-muted-foreground">
-                                                    {file.file.name} ({file.size})
+                                                  <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                                    {file.file ? file.file.name : (file.fileName || 'Uploaded File')} {file.size ? `(${file.size})` : ''}
                                                   </p>
                                                 </div>
                                               )}
                                             </div>
                                           </div>
-
+ 
                                           <div className="flex items-start gap-2 pt-7">
                                             <FormField
                                               control={form.control}
@@ -593,7 +615,7 @@ export function CreateProjectPage() {
                                                     />
                                                   </FormControl>
                                                   <FormLabel className="text-xs cursor-pointer">
-                                                    EXE File
+                                                    EXE
                                                   </FormLabel>
                                                 </FormItem>
                                               )}
